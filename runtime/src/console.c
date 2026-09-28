@@ -564,7 +564,8 @@ static int on_off(const char *arg, int *flag) {
 static void command(tllm_console *con, const char *line) {
     char buf[TLLM_CONSOLE_LINE_MAX + 1];
     snprintf(buf, sizeof buf, "%s", line);
-    char *cmd = buf, *arg = strchr(buf, ' ');
+    const char *cmd = buf;
+    char *arg = strchr(buf, ' ');
     if (arg != NULL)
         *arg++ = '\0';
     else
