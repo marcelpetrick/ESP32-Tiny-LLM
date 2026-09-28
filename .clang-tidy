@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Static analysis for the C runtime. Kept to checks with a low false-positive rate.
+# Disabled on purpose: reserved-identifier (_POSIX_C_SOURCE is a feature-test macro),
+# casting-through-void (C has no reinterpret_cast; alignment is checked by the loader),
+# easily-swappable-parameters / narrowing (kernel signatures are intentionally flat).
+Checks: >
+  -*,
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  -bugprone-reserved-identifier,
+  -bugprone-casting-through-void,
+  misc-redundant-expression,
+  performance-*
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'runtime/include/.*'

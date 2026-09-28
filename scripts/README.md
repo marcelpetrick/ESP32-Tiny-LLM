@@ -8,6 +8,8 @@ Small, documented helpers for humans, agents, and CI. Every script prints its us
 | [`../localPipeline.sh`](../localPipeline.sh) | the full quality gate (`--list` shows stages); CI runs exactly this |
 | [`ship.sh`](ship.sh) | pipeline on the staged change → bump version → conventional commit → push |
 | [`bump_version.sh`](bump_version.sh) | bump `VERSION` (patch/minor/major), mirrored into `pyproject.toml` and `uv.lock` |
+| [`build_runtime.sh`](build_runtime.sh) | optimised host build of the C runtime (`libtinyllm.so`, `tinyllm-cli`) |
+| [`c_tests.sh`](c_tests.sh) | C unit tests under ASan/UBSan, gcovr coverage gate (≥ 95 %), release build |
 | [`check_headers.sh`](check_headers.sh) | verify SPDX GPL-3.0-or-later headers on authored files |
 | [`check_docs.sh`](check_docs.sh) | markdownlint, relative-link check, Mermaid rendering, required docs present |
 | [`gpu_env.sh`](gpu_env.sh) | create `.venv-gpu` with the CUDA build of the pinned PyTorch for GPU training |

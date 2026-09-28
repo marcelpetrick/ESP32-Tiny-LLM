@@ -42,6 +42,11 @@ jobs:
           node-version: "24"
           cache: npm
 
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cppcheck ninja-build
+
       - name: Run local pipeline
         env:
           CHROME_PATH: /usr/bin/google-chrome

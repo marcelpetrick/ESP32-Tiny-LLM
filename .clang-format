@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 120
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Empty
+IndentCaseLabels: false
+PointerAlignment: Right
+IncludeBlocks: Preserve
+SortIncludes: Never
+AlignConsecutiveMacros: false

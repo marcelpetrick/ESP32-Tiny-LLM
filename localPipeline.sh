@@ -28,6 +28,9 @@ STAGES=(
     "headers|SPDX GPL-3.0-or-later headers on authored files"
     "shell|shellcheck on all shell scripts"
     "docs|markdownlint, relative links, Mermaid rendering"
+    "c-format|clang-format --dry-run on the C runtime"
+    "c-lint|cppcheck + clang-tidy on the C runtime"
+    "c-tests|C unit tests (ASan/UBSan), coverage >= 95 %, release build"
     "py-format|ruff format --check"
     "py-lint|ruff check"
     "py-types|mypy --strict"
@@ -64,6 +67,25 @@ stage_shell() {
 }
 
 stage_docs() { scripts/check_docs.sh; }
+
+c_sources() {
+    git ls-files --cached --others --exclude-standard 'runtime/*.c' 'runtime/*.h' 'firmware/*.c' 'firmware/*.h' |
+        grep -v -E '(^|/)third_party/'
+}
+
+stage_c-format() {
+    mapfile -t files < <(c_sources)
+    uv run --frozen clang-format --dry-run --Werror "${files[@]}"
+}
+
+stage_c-lint() {
+    cppcheck --enable=warning,style,performance,portability --error-exitcode=1 --inline-suppr --std=c99 \
+        --quiet -I runtime/include runtime/src runtime/cli &&
+        cmake -S runtime -B build/runtime -DCMAKE_BUILD_TYPE=Debug >/dev/null &&
+        uv run --frozen clang-tidy -p build/runtime --quiet runtime/src/*.c runtime/cli/main.c
+}
+
+stage_c-tests() { scripts/c_tests.sh; }
 
 stage_py-format() { uv run --frozen ruff format --check .; }
 
