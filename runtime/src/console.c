@@ -289,7 +289,9 @@ typedef struct {
 static int generate(tllm_console *con, const char *user, run_stats *rs, int stream) {
     tllm_ctx *ctx = con->ctx;
     uint32_t n_prompt = 0, user_start = 0;
+    uint64_t tok0 = clock_us(con);
     if (build_prompt(con, user, &n_prompt, &user_start) != 0) return -1;
+    if (ctx->profiling) ctx->prof_us[TLLM_PROF_TOKENIZER] += clock_us(con) - tok0;
     uint32_t common = 0;
     while (common < ctx->n_cached && common < n_prompt && ctx->tokens[common] == con->prompt[common]) ++common;
     rs->prompt_tokens = n_prompt;
@@ -455,13 +457,17 @@ static void story(tllm_console *con, const char *prompt, int stream, const char 
         (void)snprintf(text, sizeof text, "%s", prompt);
     uint32_t n = 0;
     con->prompt[n++] = con->bos;
+    uint64_t tok0 = clock_us(con);
     int got = tllm_tokenize(t, text, strlen(text), con->prompt + 1, (int)cap - 1);
     if (got < 0) {
         emit_error(con, "input too long for the context window");
         return;
     }
     n += (uint32_t)got;
-    if (ctx->profiling) tllm_profile_reset(ctx);
+    if (ctx->profiling) {
+        tllm_profile_reset(ctx);
+        ctx->prof_us[TLLM_PROF_TOKENIZER] = clock_us(con) - tok0;
+    }
     tllm_ctx_reset(ctx);
     text_sink sink = {story_text, sizeof story_text, 0, stream};
     story_text[0] = '\0';
