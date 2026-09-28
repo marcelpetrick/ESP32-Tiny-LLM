@@ -101,12 +101,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.7.2` |
-| Updated | 2026-09-28 18:15 UTC |
-| This commit | docs: retake README screenshots at idle host timings |
+| Version | `0.7.3` |
+| Updated | 2026-09-28 18:18 UTC |
+| This commit | ci(docker): label the image GPL-3.0-or-later |
 
 Recent commits:
 
+- `77728e8` docs: retake README screenshots at idle host timings
 - `bdf2dcb` fix(tools): place sweep chart labels without overlaps
 - `4400df9` docs(results): add the architecture sweep and the vision status page
 - `c6d8ed9` docs(plan): record the GitHub About text and topics
@@ -114,6 +115,5 @@ Recent commits:
 - `f3abae9` docs: add plan.md status with charts and update it on every commit
 - `da0f102` fix(data): include the teacher model in the paraphrase cache key
 - `39ddb45` fix(runtime): keep only well-formed replies in the conversation history
-- `0597e39` docs(results): add the M6 distillation experiment comparison
 
 <!-- ship:end -->
