@@ -144,21 +144,28 @@ add up, CRC mismatch, `ctx_len`/`d_model` above compile-time limits, and unknown
 ## 5. Runtime API (C)
 
 ```c
-tllm_status tllm_model_load(tllm_model *m, const void *blob, size_t size);
-tllm_status tllm_ctx_init(tllm_ctx *c, const tllm_model *m, void *arena, size_t arena_size);
-size_t      tllm_ctx_arena_size(const tllm_model *m);           /* exact, for static sizing */
-tllm_status tllm_forward(tllm_ctx *c, int token, float **logits_out);
-int         tllm_sample(tllm_ctx *c, const tllm_sampler_cfg *cfg, tllm_rng *rng);
-int         tllm_tokenize(const tllm_tokenizer *t, const char *text, int *out, int max);
-int         tllm_detokenize_piece(const tllm_tokenizer *t, int id, char *out, int max);
-tllm_status tllm_generate(tllm_ctx *c, const tllm_gen_cfg *cfg,
-                          const char *prompt, tllm_token_cb on_token, void *user);
+tllm_status tllm_model_load(tllm_model *m, const void *blob, size_t size);   /* in place */
+size_t      tllm_hot_arena_size(const tllm_model *m);                        /* exact */
+size_t      tllm_cold_arena_size(const tllm_model *m, int kv_int8);          /* KV cache */
+tllm_status tllm_ctx_init(tllm_ctx *c, tllm_model *m, const tllm_ctx_options *opt,
+                          void *hot, size_t hot_size, void *cold, size_t cold_size);
+tllm_status tllm_forward(tllm_ctx *c, int32_t token, const float **logits);
+tllm_status tllm_prefill(tllm_ctx *c, const int32_t *tokens, uint32_t n, const float **logits);
+int32_t     tllm_sample(float *logits, uint32_t n, const tllm_sampler_cfg *cfg, tllm_rng *rng,
+                        const int32_t *recent, uint32_t n_recent);
+int         tllm_tokenize(const tllm_tokenizer *t, const char *text, size_t len, int32_t *out, int max);
+void        tllm_console_line(tllm_console *con, const char *line);          /* §7 protocol */
 ```
 
-All working memory comes from **one caller-provided arena** sized by
-`tllm_ctx_arena_size()`. On the ESP32 the arena is split: hot vectors in internal SRAM,
-KV cache in PSRAM (`heap_caps_malloc` once at boot). Host tests wrap `malloc` to assert
-zero allocations inside `tllm_generate()`.
+All working memory comes from **two caller-provided arenas** sized by the functions
+above: the *hot* arena (activations, logits, tokenizer hash table — internal SRAM on the
+ESP32, ~24 KB for tier M) and the *cold* arena (KV cache — PSRAM, 512 KB f32 / 128 KB int8
+for tier M at 128 tokens). `tllm_prefill()` reuses the longest token prefix already in
+the KV cache, so conversation history is not recomputed every turn (the state block sits
+after the history for exactly this reason). On the host, `runtime/src/host.c` wraps
+loading and arena allocation behind an opaque handle used by `tinyllm-cli`, the web
+simulator, and the Python bindings (`tools/runtime.py`); its allocation counter proves in
+tests that chatting performs zero heap allocations.
 
 ## 6. Safety boundary
 
