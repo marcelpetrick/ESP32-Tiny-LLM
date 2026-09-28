@@ -87,6 +87,21 @@ Distillation from a local LLM teacher buys **+17 points on unseen phrasing** and
 typos a non-issue, at identical runtime cost. The transformer beats the keyword baseline
 by 20-35 points everywhere except safety, where refusals are mostly lexical anyway.
 
+## More capacity (tier L, 2.29 M parameters)
+
+Same data, 6 × 192 instead of 4 × 128 (3.4 × the parameters, ~3.5 × slower on the device):
+
+| Suite | tier M (shipped) | tier L |
+|---|---:|---:|
+| teacher_test | 85.3 % | 82.3 % |
+| heldout | 88.1 % | 88.8 % |
+| robust | 98.5 % | 98.6 % |
+| multiturn | 99.5 % | 99.3 % |
+| safety | 99.6 % | 99.9 % |
+
+No meaningful gain: for this closed domain the data, not the parameter count, limits
+quality — tier M stays the product.
+
 ## What still fails
 
 - *Unseen verbs*: held-out frames such as "kill the fan" use words the model never saw.

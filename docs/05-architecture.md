@@ -207,6 +207,10 @@ firmware UART — so one test suite covers all three.
 | `/state`, `/set key=value` | show / change the simulated device state |
 | `/benchmark <case>` | run a fixed prompt, report prefill/decode tok/s |
 | `/checksums` | per-layer checksums of the last forward (divergence hunting, vision §29) |
+| `/generate TEXT` | continue a text like llama2.c's `run.c` (story mode; default for models without chat tokens) |
+| `/execute on\|off` | apply approved actions to the simulated device, or only report them |
+| `/reset` | conversation and simulated device back to defaults |
+| `/bandwidth`, `/gemv` | firmware only: memory read bandwidth per tier, GEMV throughput ([08](08-firmware.md)) |
 
 Every reply ends with one machine-readable line for the serial runner / HIL harness:
 
