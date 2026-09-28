@@ -10,7 +10,7 @@ from training.world.state import StateParseError
 
 def test_render_default_state() -> None:
     assert render_state(DeviceState()) == (
-        "<S> t=22.0 h=55 soil=50 fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0 </S>"
+        "<S> t=22.0 h=55 soil=50 fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0</S>"
     )
 
 
@@ -31,10 +31,11 @@ def test_round_trip(state: DeviceState) -> None:
     "text",
     [
         "t=1",
-        "<S> t=22.0 h=55 soil=50 fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0 </X>",
-        "<S> h=22.0 t=55 soil=50 fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0 </S>",
-        "<S> t=22.0 h=55 soil=na fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0 </S>",
-        "<S> t 22.0 h=55 soil=5 fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0 </S>",
+        "<S> t=22.0 h=55 soil=50 fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0</X>",
+        "<S> h=22.0 t=55 soil=50 fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0</S>",
+        "<S> t=22.0 h=55 soil=na fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0</S>",
+        "<S> t 22.0 h=55 soil=5 fan=0 heat=0 pump=0 light=0 win=0 pa=0.0 vib=0 err=0</S>",
+        "<S> t=22.0 h=55</S>",
     ],
 )
 def test_parse_rejects_malformed(text: str) -> None:

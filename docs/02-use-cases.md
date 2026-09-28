@@ -63,11 +63,15 @@ and naturally produces:
 ### Prompt and output format (token-efficient, parser-friendly)
 
 ```text
-<S> t=31.2 h=73 soil=41 fan=0 heat=0 pump=0 win=1 err=0 </S>
-<U> why is it still so sticky in here? </U>
-<A> humidity is 73 percent and the fan is off. starting the fan at level 2. </A>
-<ACT> fan=2 </ACT><eos>
+<bos><S> t=31.2 h=78 soil=41 fan=0 heat=0 pump=0 light=0 win=1 pa=0.0 vib=0 err=0</S>
+<U> why is it still so sticky in here</U><A>
+ humidity is 78 percent and the fan is off. setting the fan to level 2.</A><ACT> fan=2</ACT><eos>
 ```
+
+(One line in reality; wrapped here. The exact layout is defined in
+`training/data/textformat.py` and mirrored by the C console.) The state block costs
+34 tokens with the trained tokenizer, a typical single-turn sample about 69 tokens, so a
+128-token context holds the state plus up to three previous exchanges.
 
 The model **proposes**; a deterministic parser + validator decides (see
 [05-architecture.md](05-architecture.md) §Safety).

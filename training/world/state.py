@@ -4,7 +4,7 @@
 
 Canonical form (field order is fixed; mirrored by ``runtime/src/device.c``)::
 
-    <S> t=31.2 h=73 soil=41 fan=0 heat=0 pump=0 light=0 win=1 pa=0.0 vib=0 err=0 </S>
+    <S> t=31.2 h=73 soil=41 fan=0 heat=0 pump=0 light=0 win=1 pa=0.0 vib=0 err=0</S>
 
 ``t`` and ``h`` may be ``na`` when the sensor is offline.
 """
@@ -59,7 +59,7 @@ def _format_value(name: str, value: object) -> str:
 def render_state(state: DeviceState) -> str:
     """Render ``state`` in canonical form, including the ``<S>``/``</S>`` markers."""
     body = " ".join(f"{name}={_format_value(name, getattr(state, name))}" for name in FIELD_NAMES)
-    return f"{STATE_OPEN} {body} {STATE_CLOSE}"
+    return f"{STATE_OPEN} {body}{STATE_CLOSE}"
 
 
 class StateParseError(ValueError):
@@ -68,11 +68,13 @@ class StateParseError(ValueError):
 
 def parse_state(text: str) -> DeviceState:
     """Parse a canonical state block produced by :func:`render_state`."""
-    parts = text.split()
-    if len(parts) != len(FIELD_NAMES) + 2 or parts[0] != STATE_OPEN or parts[-1] != STATE_CLOSE:
+    if not (text.startswith(STATE_OPEN + " ") and text.endswith(STATE_CLOSE)):
         raise StateParseError(f"not a state block: {text!r}")
+    parts = text[len(STATE_OPEN) : -len(STATE_CLOSE)].split()
+    if len(parts) != len(FIELD_NAMES):
+        raise StateParseError(f"expected {len(FIELD_NAMES)} fields, got {len(parts)}")
     values: dict[str, object] = {}
-    for name, part in zip(FIELD_NAMES, parts[1:-1], strict=True):
+    for name, part in zip(FIELD_NAMES, parts, strict=True):
         key, sep, raw = part.partition("=")
         if key != name or not sep:
             raise StateParseError(f"expected field {name!r}, got {part!r}")
