@@ -21,10 +21,10 @@ def test_variants_are_valid_configs() -> None:
 
 def test_pareto_frontier() -> None:
     pts = [
-        {"name": "a", "quality": 0.9, "tok_s": 10.0},
-        {"name": "b", "quality": 0.8, "tok_s": 50.0},
-        {"name": "c", "quality": 0.7, "tok_s": 20.0},  # dominated by b
-        {"name": "d", "quality": 0.9, "tok_s": 10.0},  # tie with a: both kept
+        {"name": "a", "quality": 0.9, "reply_ms": 900.0},
+        {"name": "b", "quality": 0.8, "reply_ms": 200.0},
+        {"name": "c", "quality": 0.7, "reply_ms": 500.0},  # dominated by b
+        {"name": "d", "quality": 0.9, "reply_ms": 900.0},  # tie with a: both kept
     ]
     assert sweep.pareto(pts) == {"a", "b", "d"}
 
@@ -33,6 +33,7 @@ def test_report_mode_renders(tmp_path: Path, capsys: pytest.CaptureFixture[str])
     data = tmp_path / "data"
     data.mkdir()
     (data / "manifest.json").write_text(json.dumps({"vocab_size": 1024}))
+    (data / "heldout.jsonl").write_text('{"target_ids": [1, 2, 3]}\n{"target_ids": [1]}\n')
     runs = tmp_path / "runs"
     runs.mkdir()
     for v, (h, t) in zip(sweep.VARIANTS[:3], [(0.9, 0.8), (0.7, 0.6), (0.95, 0.9)], strict=True):
@@ -59,4 +60,6 @@ def test_report_mode_renders(tmp_path: Path, capsys: pytest.CaptureFixture[str])
     assert text.startswith("<svg")
     assert "polyline" in text
     assert "6x128" in md_path.read_text()
+    assert sweep.mean_reply_tokens(data) == 2.0
+    assert sweep.VARIANTS[-1].data_dir(data).name == "data-vocab2048"
     assert "● |" in capsys.readouterr().out

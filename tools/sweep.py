@@ -44,6 +44,11 @@ class Variant:
     d_ff: int = 256
     mlp: str = "gelu"
     pos: str = "learned"
+    vocab: int | None = None  # None: the base dataset's tokenizer; else a retokenised copy
+
+    def data_dir(self, base: Path) -> Path:
+        """Dataset of this variant (identical samples, possibly another vocabulary size)."""
+        return base if self.vocab is None else base.parent / f"{base.name}-vocab{self.vocab}"
 
     def config(self, vocab: int, ctx: int = 128) -> ModelConfig:
         return ModelConfig(
@@ -69,13 +74,14 @@ def _v(name: str, **kw: Any) -> Variant:
         "mlp": "gelu",
         "pos": "learned",
     }
+    vocab = kw.pop("vocab", None)
     base.update(kw)
     args = (
         "--n-layers", str(base["n_layers"]), "--d-model", str(base["d_model"]), "--n-heads", str(base["n_heads"]),
         "--n-kv-heads", str(base["n_kv_heads"]), "--d-ff", str(base["d_ff"]), "--mlp", str(base["mlp"]),
         "--pos", str(base["pos"]),
     )  # fmt: skip
-    return Variant(name, args, **base)
+    return Variant(name, args, vocab=vocab, **base)
 
 
 VARIANTS = (
@@ -91,7 +97,27 @@ VARIANTS = (
     _v("swiglu", mlp="swiglu", d_ff=176),
     _v("rope", pos="rope"),
     _v("s-2x96", n_layers=2, d_model=96, d_ff=192),
+    _v("vocab-512", vocab=512),
+    _v("vocab-2048", vocab=2048),
 )
+
+
+def ensure_data(variant: Variant, base: Path) -> Path:  # pragma: no cover - builds a full dataset
+    """Build the retokenised dataset of a vocabulary variant if missing (same seeds and samples)."""
+    data = variant.data_dir(base)
+    if not (data / "manifest.json").exists():
+        teacher = Path("data/teacher/paraphrases.json")
+        cmd = [
+            sys.executable,
+            "-m",
+            "training.data.dataset",
+            "--out",
+            str(data),
+            "--vocab",
+            str(variant.vocab),
+        ]
+        subprocess.run([*cmd, "--teacher", str(teacher)], check=True, stdout=subprocess.DEVNULL)
+    return data
 
 
 def run_variant(
@@ -99,6 +125,7 @@ def run_variant(
 ) -> dict[str, Any]:  # pragma: no cover - GPU
     """Train, export and evaluate one variant (skips finished steps)."""
     run = out / variant.name
+    data = ensure_data(variant, data)
     if not (run / "best.pt").exists():
         cmd = [
             python,
@@ -136,32 +163,43 @@ def run_variant(
         check=True,
         stdout=subprocess.DEVNULL,
     )  # fmt: skip
-    return collect(variant, out, json.loads((data / "manifest.json").read_text())["vocab_size"])
+    return collect(variant, out, data)
 
 
-def collect(variant: Variant, out: Path, vocab: int) -> dict[str, Any]:
+def mean_reply_tokens(data: Path) -> float:
+    """Average generated tokens per answer on the held-out suite (tokenizer dependent)."""
+    lines = (data / "heldout.jsonl").read_text().splitlines()
+    lengths = [len(json.loads(line)["target_ids"]) for line in lines]
+    return sum(lengths) / max(1, len(lengths))
+
+
+def collect(variant: Variant, out: Path, data: Path) -> dict[str, Any]:
     """Merge evaluation results with the size/speed estimate of one variant."""
     evaluation = json.loads((out / f"{variant.name}.eval.json").read_text())
     quality = sum(evaluation[s]["action_exact"] for s in QUALITY_SPLITS) / len(QUALITY_SPLITS)
+    vocab = json.loads((data / "manifest.json").read_text())["vocab_size"]
     est = estimate(Tier(variant.name, variant.config(vocab)))
+    reply_tokens = mean_reply_tokens(data)
     return {
         "name": variant.name,
         "params": est.params,
         "weight_bytes": est.weight_bytes,
         "tok_s": round(est.ceiling_tok_s, 1),
+        "reply_tokens": round(reply_tokens, 1),
+        "reply_ms": round(1000.0 * reply_tokens / est.ceiling_tok_s, 1),
         "quality": round(quality, 4),
         **{s: evaluation[s]["action_exact"] for s in QUALITY_SPLITS},
     }
 
 
 def pareto(points: list[dict[str, Any]]) -> set[str]:
-    """Names not dominated in (quality, tok_s)."""
+    """Names not dominated in (higher quality, lower estimated reply latency)."""
     front = set()
     for p in points:
         dominated = any(
             q["quality"] >= p["quality"]
-            and q["tok_s"] >= p["tok_s"]
-            and (q["quality"], q["tok_s"]) != (p["quality"], p["tok_s"])
+            and q["reply_ms"] <= p["reply_ms"]
+            and (q["quality"], q["reply_ms"]) != (p["quality"], p["reply_ms"])
             for q in points
         )
         if not dominated:
@@ -170,10 +208,10 @@ def pareto(points: list[dict[str, Any]]) -> set[str]:
 
 
 def svg(points: list[dict[str, Any]], width: int = 720, height: int = 440) -> str:
-    """Scatter plot (x = estimated tok/s, y = quality) with the frontier highlighted."""
+    """Scatter plot (x = estimated ms per reply, y = quality) with the frontier highlighted."""
     front = pareto(points)
     pad_l, pad_r, pad_t, pad_b = 60, 150, 30, 50
-    xs = [float(p["tok_s"]) for p in points]
+    xs = [float(p["reply_ms"]) for p in points]
     ys = [100.0 * float(p["quality"]) for p in points]
     x0, x1 = 0.0, max(xs) * 1.1
     y0, y1 = max(0.0, min(ys) - 5), min(100.0, max(ys) + 3)
@@ -192,7 +230,7 @@ def svg(points: list[dict[str, Any]], width: int = 720, height: int = 440) -> st
         f'<line class="ax" x1="{pad_l}" y1="{height - pad_b}" x2="{width - pad_r}" y2="{height - pad_b}"/>',
         f'<line class="ax" x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{height - pad_b}"/>',
         f'<text class="t" x="{(pad_l + width - pad_r) / 2}" y="{height - 12}" text-anchor="middle">'
-        f"estimated ESP32-S3 decode tok/s (INT8, {DEFAULT_BANDWIDTH / 1e6:.0f} MB/s PSRAM)</text>",
+        f"estimated ESP32-S3 decode time per reply, ms (INT8, {DEFAULT_BANDWIDTH / 1e6:.0f} MB/s PSRAM)</text>",
         f'<text class="t" x="16" y="{(pad_t + height - pad_b) / 2}" text-anchor="middle" '
         f'transform="rotate(-90 16 {(pad_t + height - pad_b) / 2})">action accuracy, unseen phrasing (%)</text>',
     ]
@@ -205,13 +243,13 @@ def svg(points: list[dict[str, Any]], width: int = 720, height: int = 440) -> st
         parts.append(
             f'<text class="t" x="{sx(xv):.1f}" y="{height - pad_b + 18}" text-anchor="middle">{xv:.0f}</text>'
         )
-    frontier = sorted((p for p in points if p["name"] in front), key=lambda p: p["tok_s"])
+    frontier = sorted((p for p in points if p["name"] in front), key=lambda p: p["reply_ms"])
     if len(frontier) > 1:
-        path = " ".join(f"{sx(p['tok_s']):.1f},{sy(100 * p['quality']):.1f}" for p in frontier)
+        path = " ".join(f"{sx(p['reply_ms']):.1f},{sy(100 * p['quality']):.1f}" for p in frontier)
         parts.append(f'<polyline class="ln" points="{path}"/>')
     for p in points:
         cls = "fr" if p["name"] in front else "pt"
-        cx, cy = sx(p["tok_s"]), sy(100 * p["quality"])
+        cx, cy = sx(p["reply_ms"]), sy(100 * p["quality"])
         parts.append(
             f'<circle class="{cls}" cx="{cx:.1f}" cy="{cy:.1f}" r="5"><title>{p["name"]}</title></circle>'
         )
@@ -223,12 +261,14 @@ def svg(points: list[dict[str, Any]], width: int = 720, height: int = 440) -> st
 def markdown(points: list[dict[str, Any]]) -> str:
     front = pareto(points)
     lines = [
-        "| Variant | Params | INT8 weight bytes | Est. tok/s | Held-out | Teacher paraphrases | Mean | Pareto |",
-        "|---|---:|---:|---:|---:|---:|---:|:---:|",
+        "| Variant | Params | INT8 weights | Est. tok/s | Tokens/reply | Est. ms/reply "
+        "| Held-out | Teacher paraphrases | Mean | Pareto |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|:---:|",
     ]
     for p in sorted(points, key=lambda p: -p["quality"]):
         lines.append(
             f"| {p['name']} | {p['params'] / 1e6:.2f} M | {p['weight_bytes'] / 1e6:.2f} MB | {p['tok_s']:.0f} | "
+            f"{p['reply_tokens']:.1f} | {p['reply_ms']:.0f} | "
             f"{100 * p['heldout']:.1f} % | {100 * p['teacher_test']:.1f} % | {100 * p['quality']:.1f} % | "
             f"{'●' if p['name'] in front else ''} |"
         )
@@ -252,9 +292,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     variants = [v for v in VARIANTS if args.only is None or v.name in args.only.split(",")]
     if args.report is not None:
-        vocab = json.loads((args.data / "manifest.json").read_text())["vocab_size"]
         points = [
-            collect(v, args.report, vocab)
+            collect(v, args.report, v.data_dir(args.data))
             for v in variants
             if (args.report / f"{v.name}.eval.json").exists()
         ]
