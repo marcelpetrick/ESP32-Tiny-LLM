@@ -206,7 +206,7 @@ button.ghost { background: transparent; color: var(--accent); border: 1px solid 
 .stats dt { color: var(--muted); }
 .stats dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; font-family: var(--mono); }
 
-.profile .row { display: grid; grid-template-columns: 82px 1fr 58px; gap: 8px; align-items: center; font-size: 0.75rem; margin: 3px 0; }
+.profile .row { display: grid; grid-template-columns: 82px 1fr 76px; gap: 8px; align-items: center; font-size: 0.75rem; margin: 3px 0; }
 .profile .bar { height: 9px; border-radius: 5px; background: var(--accent); min-width: 2px; }
 .profile .ms { text-align: right; font-family: var(--mono); color: var(--muted); }
 .note { color: var(--muted); font-size: 0.75rem; margin: 14px 0 0; }
