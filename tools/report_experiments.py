@@ -47,6 +47,8 @@ def load(directory: Path) -> dict[str, dict[str, dict[str, float]]]:
     """All evaluation JSON files of a run directory, in E1..E4 order."""
     runs = {}
     for path in sorted(directory.glob("e*.json")):
+        if path.name.endswith(".tllm.json"):  # model manifests, not evaluations
+            continue
         runs[path.stem] = json.loads(path.read_text())
     return runs
 

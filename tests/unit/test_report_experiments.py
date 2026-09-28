@@ -15,6 +15,7 @@ def test_table_marks_best_and_missing(tmp_path: Path, capsys: pytest.CaptureFixt
         json.dumps({"heldout": {"action_exact": 0.7}, "test_id": {"action_exact": 0.99}})
     )
     (tmp_path / "e3-teacher.json").write_text(json.dumps({"heldout": {"action_exact": 0.88}}))
+    (tmp_path / "e1-scratch.tllm.json").write_text("{}")  # manifest: ignored
     out = tmp_path / "t.md"
     assert rep.main([str(tmp_path), "--out", str(out)]) == 0
     text = out.read_text()
