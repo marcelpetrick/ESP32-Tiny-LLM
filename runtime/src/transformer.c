@@ -305,6 +305,7 @@ tllm_status tllm_forward(tllm_ctx *ctx, int32_t token, const float **logits) {
     ctx->tokens[pos] = token;
     ctx->n_cached = pos + 1u;
     ctx->prof_tokens++;
+    if (ctx->opt.yield != NULL) ctx->opt.yield();
     if (logits != NULL) *logits = ctx->logits;
     return TLLM_OK;
 }

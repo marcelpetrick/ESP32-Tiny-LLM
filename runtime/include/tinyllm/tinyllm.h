@@ -126,11 +126,15 @@ typedef enum {
 const char *tllm_prof_stage_name(tllm_prof_stage stage);
 
 typedef uint64_t (*tllm_clock_fn)(void);
+/* Called once after every forward step; firmware uses it to yield to lower-priority
+ * tasks (task watchdog) without the runtime knowing about FreeRTOS. */
+typedef void (*tllm_yield_fn)(void);
 
 typedef struct {
     tllm_act_mode act_mode; /* int8 weights: TLLM_ACT_F32 (W8A32) or TLLM_ACT_I8 (W8A8) */
     int kv_int8;            /* 1: int8 KV cache with per-row scales, 0: float32 */
     tllm_clock_fn clock;    /* microsecond clock for profiling, may be NULL */
+    tllm_yield_fn yield;    /* optional per-token scheduling hook, may be NULL */
 } tllm_ctx_options;
 
 typedef struct {

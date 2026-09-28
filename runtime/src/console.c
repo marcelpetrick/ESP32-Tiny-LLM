@@ -132,6 +132,8 @@ static void emit_error(tllm_console *con, const char *message) {
 
 const char *tllm_console_last_json(const tllm_console *con) { return con->json; }
 
+void tllm_console_write(tllm_console *con, const char *text) { out(con, text); }
+
 static uint64_t clock_us(const tllm_console *con) { return con->ctx->opt.clock != NULL ? con->ctx->opt.clock() : 0u; }
 
 /* ------------------------------------------------------------------ init */
@@ -742,7 +744,7 @@ static void command(tllm_console *con, const char *line) {
         story(con, arg, 1, "generate", 1);
     } else if (strcmp(cmd, "/benchmark") == 0) {
         cmd_benchmark(con, arg);
-    } else {
+    } else if (con->platform_cmd == NULL || !con->platform_cmd(con, line)) {
         emit_error(con, "unknown command, try /help");
     }
 }

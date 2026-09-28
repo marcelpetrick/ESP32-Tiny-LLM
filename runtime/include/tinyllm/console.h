@@ -29,8 +29,11 @@ extern "C" {
 typedef void (*tllm_write_fn)(void *user, const char *text, size_t len);
 /* Optional platform memory report appended to /memory (e.g. heap_caps statistics). */
 typedef int (*tllm_memory_fn)(void *user, char *out, size_t cap);
+struct tllm_console_s;
+/* Optional platform commands (e.g. "/bandwidth" on the ESP32). Return 1 if handled. */
+typedef int (*tllm_platform_cmd_fn)(struct tllm_console_s *con, const char *line);
 
-typedef struct {
+typedef struct tllm_console_s {
     tllm_ctx *ctx;
     tllm_device_state state;
     tllm_sampler_cfg sampler;
@@ -42,6 +45,7 @@ typedef struct {
     int chat;    /* model has the chat control tokens; otherwise plain lines run /generate */
     tllm_write_fn write;
     tllm_memory_fn memory;
+    tllm_platform_cmd_fn platform_cmd;
     void *user;
     /* conversation history: completed exchanges as tokens */
     int32_t hist[TLLM_MAX_CTX];
@@ -64,6 +68,9 @@ tllm_status tllm_console_init(tllm_console *con, tllm_ctx *ctx, tllm_write_fn wr
 
 /* Handle one input line (without the trailing newline). */
 void tllm_console_line(tllm_console *con, const char *line);
+
+/* Write text to the console output (for platform commands). */
+void tllm_console_write(tllm_console *con, const char *text);
 
 /* The last "@@" JSON payload (without the "@@" prefix), for hosts that want it directly. */
 const char *tllm_console_last_json(const tllm_console *con);

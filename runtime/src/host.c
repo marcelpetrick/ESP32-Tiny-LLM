@@ -84,7 +84,7 @@ tllm_host *tllm_host_open(const char *path, int act_int8, int kv_int8, char *err
     size_t hot = tllm_hot_arena_size(&h->model), cold = tllm_cold_arena_size(&h->model, kv_int8);
     h->hot = host_alloc(hot);
     h->cold = host_alloc(cold);
-    tllm_ctx_options opt = {act_int8 ? TLLM_ACT_I8 : TLLM_ACT_F32, kv_int8, tllm_host_clock_us};
+    tllm_ctx_options opt = {act_int8 ? TLLM_ACT_I8 : TLLM_ACT_F32, kv_int8, tllm_host_clock_us, NULL};
     st = tllm_ctx_init(&h->ctx, &h->model, &opt, h->hot, hot, h->cold, cold);
     if (st == TLLM_OK) st = tllm_console_init(&h->con, &h->ctx, capture, h);
     if (st != TLLM_OK) {

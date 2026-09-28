@@ -39,6 +39,15 @@ static int mem_report(void *user, char *out, size_t cap) {
     return snprintf(out, cap, "psram free 123");
 }
 
+static int platform_cmd(tllm_console *con, const char *line) {
+    if (strcmp(line, "/bandwidth") != 0) return 0;
+    tllm_console_write(con, "bandwidth ok\n");
+    return 1;
+}
+
+static int g_yields;
+static void count_yield(void) { ++g_yields; }
+
 static uint64_t g_us;
 static uint64_t tick(void) { return g_us += 7u; }
 
@@ -67,10 +76,11 @@ static void setup(cfix *f, uint32_t ctx_len) {
     size_t hs = tllm_hot_arena_size(&f->model), cs = tllm_cold_arena_size(&f->model, 0);
     f->hot = malloc(hs);
     f->cold = malloc(cs);
-    tllm_ctx_options opt = {TLLM_ACT_F32, 0, tick};
+    tllm_ctx_options opt = {TLLM_ACT_F32, 0, tick, count_yield};
     CHECK_EQ_INT(tllm_ctx_init(&f->ctx, &f->model, &opt, f->hot, hs, f->cold, cs), TLLM_OK);
     CHECK_EQ_INT(tllm_console_init(&f->con, &f->ctx, capture, f), TLLM_OK);
     f->con.memory = mem_report;
+    f->con.platform_cmd = platform_cmd;
 }
 
 static void teardown(cfix *f) {
@@ -207,6 +217,8 @@ void test_console(void) {
     CHECK_CONTAINS(run(f, "/benchmark read"), "\"case\":\"read\",\"mean_token_ms\":");
     CHECK_CONTAINS(run(f, "/benchmark nope"), "unknown benchmark");
     CHECK_CONTAINS(run(f, "/frobnicate"), "unknown command");
+    CHECK_CONTAINS(run(f, "/bandwidth"), "bandwidth ok");
+    CHECK(g_yields > 0);
     CHECK_CONTAINS(run(f, "   "), "empty input");
     CHECK_CONTAINS(run(f, "/kv-reset"), "conversation cleared");
     CHECK_EQ_INT(f->con.n_turns, 0);
