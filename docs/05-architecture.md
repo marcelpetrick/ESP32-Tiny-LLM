@@ -113,10 +113,16 @@ tensors are used **in place** from the loaded/mapped blob.
 | 76 | `payload_size` | u32 |
 | 80 | `payload_crc32` (IEEE, everything after the header) | u32 |
 | 84 | `model_id` (first 16 bytes of SHA-256 of training manifest) | 16 × u8 |
-| 100 | reserved (zero) | 28 × u8 |
+| 100 | `norm_eps` | f32 |
+| 104 | `rope_theta` | f32 |
+| 108 | reserved (zero) | 20 × u8 |
 
 The tensor table holds `{name[32], dtype, n_dims, dims[4], data_offset, data_size,
-scale_offset}` per tensor. The exporter also writes `model.manifest.json` with names,
+scale_offset}` per tensor (68 bytes each; `dtype` 0 = f32, 1 = i8; `scale_offset` =
+`0xFFFFFFFF` for unscaled tensors). Tensor order and names: `tok_emb`, `pos_emb` (learned
+positions only), then per layer `l{i}.attn_norm, wq, wk, wv, wo, mlp_norm, w1, w2[, w3]`,
+then `final_norm`. Matrices are stored `[out, in]` row-major, so every output element is a
+contiguous dot product; INT8 matrices are followed by one f32 scale per row. The exporter also writes `model.manifest.json` with names,
 shapes, dtypes, offsets, hashes, and training provenance (vision §14, §29).
 
 The loader rejects: wrong magic, unknown version, header/arch mismatch, sizes that don't
