@@ -34,5 +34,6 @@ playwright-report/
 .pipeline/
 runs/
 data/cache/
+data/generated/
 *.pt
 !tests/**/*.pt
