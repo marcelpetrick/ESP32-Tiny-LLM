@@ -218,6 +218,8 @@ void test_console(void) {
     CHECK_CONTAINS(run(f, "/benchmark nope"), "unknown benchmark");
     CHECK_CONTAINS(run(f, "/frobnicate"), "unknown command");
     CHECK_CONTAINS(run(f, "/bandwidth"), "bandwidth ok");
+    CHECK_CONTAINS(run(f, "/tokenize the fan=2"), "\"event\":\"tokens\",\"ids\":[");
+    CHECK_CONTAINS(f->out, "\"round_trip\":true");
     CHECK(g_yields > 0);
     CHECK_CONTAINS(run(f, "   "), "empty input");
     CHECK_CONTAINS(run(f, "/kv-reset"), "conversation cleared");
@@ -284,6 +286,12 @@ void test_console(void) {
     CHECK(json_int(tllm_console_last_json(&f->con), "gen_tokens") <= 5);
     CHECK_CONTAINS(run(f, "/help"), "story prompt");
     CHECK_CONTAINS(run(f, "/benchmark chat"), "\"event\":\"benchmark\"");
+    CHECK_CONTAINS(run(f, "/tokenize ab c"), "\"round_trip\":true"); /* dummy prefix handled */
+    char big[TLLM_CONSOLE_LINE_MAX + 20];
+    memset(big, 'x', sizeof big - 1u);
+    memcpy(big, "/tokenize ", 10);
+    big[sizeof big - 1u] = '\0';
+    CHECK_CONTAINS(run(f, big), "\"round_trip\""); /* long input is truncated, still answered */
     char bytes[TLLM_CONSOLE_LINE_MAX];
     memset(bytes, 'x', sizeof bytes - 1u); /* 255 byte-fallback tokens > ctx 64 */
     bytes[sizeof bytes - 1u] = '\0';

@@ -578,6 +578,34 @@ static void cmd_checksums(tllm_console *con) {
     json_end(con, &j);
 }
 
+/* Token ids of TEXT plus a round-trip check (vision §7: same results in Python and on the chip). */
+static void cmd_tokenize(tllm_console *con, const char *text) {
+    const tllm_tokenizer *t = &con->ctx->model->tok;
+    int32_t ids[TLLM_CONSOLE_LINE_MAX + 8];
+    int n = tllm_tokenize(t, text, strlen(text), ids, (int)(sizeof ids / sizeof ids[0]));
+    if (n < 0) {
+        emit_error(con, "cannot tokenize");
+        return;
+    }
+    char back[4 * TLLM_CONSOLE_LINE_MAX];
+    size_t len = 0;
+    for (int i = 0; i < n; ++i) {
+        int k = tllm_token_bytes(t, ids[i], back + len, (int)(sizeof back - len - 1u));
+        if (k < 0) break;
+        len += (size_t)k;
+    }
+    back[len] = '\0';
+    /* scored (llama2.c) tokenizers add a dummy-prefix space */
+    const char *decoded = (t->kind == TLLM_TOK_SCORED && back[0] == ' ') ? back + 1 : back;
+    int round_trip = strcmp(decoded, text) == 0;
+    outf(con, "%d tokens, round trip %s\n", n, round_trip ? "ok" : "differs");
+    jbuf j = json_begin(con, "tokens");
+    jraw(&j, ",\"ids\":[");
+    for (int i = 0; i < n; ++i) jfmt(&j, "%s%d", i ? "," : "", (int)ids[i]);
+    jfmt(&j, "],\"round_trip\":%s", round_trip ? "true" : "false");
+    json_end(con, &j);
+}
+
 static const struct {
     const char *name, *prompt;
 } BENCHMARKS[] = {{"read", "what is the temperature"},
@@ -644,7 +672,7 @@ static void cmd_benchmark(tllm_console *con, const char *arg) {
 static void cmd_help(tllm_console *con) {
     out(con, "commands: /help /model-info /memory /profile on|off /kv-reset /reset /seed N /temp X /topk N\n"
              "          /max-tokens N /state /set key=value... /execute on|off /checksums /benchmark <case>\n"
-             "          /generate TEXT (continue a text, llama2.c style)\n");
+             "          /generate TEXT (continue a text, llama2.c style)  /tokenize TEXT\n");
     out(con, con->chat ? "anything else is a chat message.\n" : "anything else is a story prompt.\n");
     ok(con, "help");
 }
@@ -740,6 +768,8 @@ static void command(tllm_console *con, const char *line) {
         }
     } else if (strcmp(cmd, "/checksums") == 0) {
         cmd_checksums(con);
+    } else if (strcmp(cmd, "/tokenize") == 0) {
+        cmd_tokenize(con, arg);
     } else if (strcmp(cmd, "/generate") == 0) {
         story(con, arg, 1, "generate", 1);
     } else if (strcmp(cmd, "/benchmark") == 0) {

@@ -8,6 +8,7 @@ import pytest
 
 from tools import runtime
 from training import export
+from training.export import read_tllm
 
 
 @pytest.fixture(scope="module")
@@ -66,3 +67,13 @@ def test_closed_runtime_rejects_calls(model_path: Path) -> None:
     rt.close()
     with pytest.raises(runtime.TinyLLMError):
         rt.submit("hello")
+
+
+def test_tokenize_command_matches_python_tokenizer() -> None:
+    shipped = runtime.REPO_ROOT / "models" / "greenhouse-m-int8.tllm"
+    tokenizer = read_tllm(shipped).tokenizer
+    text = "turn on the fan, t=31.2 please!"
+    with runtime.Runtime(shipped) as rt:
+        payload = rt.command(f"/tokenize {text}")
+    assert payload["ids"] == tokenizer.encode_text(text)
+    assert payload["round_trip"] is True
