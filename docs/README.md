@@ -13,6 +13,7 @@ working in this repo are in [AGENTS.md](../AGENTS.md).
 | 05 | [Architecture](05-architecture.md) | Runtime, file format, tokenizer, safety boundary, firmware, web |
 | 06 | [Implementation plan](06-implementation-plan.md) | Phases, exit criteria, tests, CI, risks, vision traceability |
 | 07 | [Prior art](07-prior-art.md) | Who did what before us, licences, and how we use it |
+| — | [Results: tier M](results/greenhouse-m.md) | Measured quality of the shipped model, FP32 vs INT8, effect of distillation |
 
 ```mermaid
 flowchart LR
