@@ -36,7 +36,7 @@ is attached (phase P10 of the [plan](docs/06-implementation-plan.md)).
 |---|---|
 | Transformer runtime (C99) | done — loader with CRC, tokenizers, KV cache, f32/W8A32/W8A8, RoPE, SwiGLU, GQA/MQA, sampler, profiler; zero heap use after init |
 | Numerical agreement | done — PyTorch ↔ C logits within 1e-4; identical greedy stories to upstream llama2.c `run.c` |
-| Greenhouse assistant model | done — 673 k params, 732 KiB INT8, 88–99 % action accuracy per suite ([results](docs/results/greenhouse-m.md)) |
+| Greenhouse assistant model | done — 788 k params, 804 KiB INT8 (4×128, RoPE, 2048-token vocabulary), 88–100 % action accuracy per suite ([results](docs/results/greenhouse-m.md)) |
 | Distillation from a local LLM | done — Qwen3.5-4B (Apache-2.0) paraphrases, +17 points on unseen phrasing |
 | Firmware (ESP-IDF 5.5) | builds in CI, boots and chats in QEMU; flashing/HIL needs the board |
 | Web simulator + Docker image | done — `ghcr.io/marcelpetrick/esp32-tiny-llm` |
@@ -94,8 +94,8 @@ flowchart LR
 
 - **The model proposes, the firmware decides.** Actions like `fan=2` pass a strict parser
   and interlocks (overheat, heater with open window, latched faults) before execution.
-- **Memory bandwidth decides speed** on the ESP32-S3; the tier-M model reads ~0.7 MB per
-  token → an estimated 33–59 tok/s from PSRAM ([feasibility](docs/01-feasibility.md)).
+- **Memory bandwidth decides speed** on the ESP32-S3; the tier-M model reads ~0.85 MB per
+  token → an estimated 26–48 tok/s from PSRAM ([feasibility](docs/01-feasibility.md)).
 - **llama2.c is our oracle**: the runtime also loads llama2.c checkpoints; tests build the
   unmodified upstream `run.c` and require identical output ([prior art](docs/07-prior-art.md)).
 

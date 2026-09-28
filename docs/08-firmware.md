@@ -98,7 +98,7 @@ as a dry run).
 2. `/bandwidth` → replace the 45 MB/s estimate in [01-feasibility.md](01-feasibility.md)
    with the measured PSRAM figure; `/gemv` → measured MAC rate.
 3. Run the serial runner; commit `docs/results/benchmark-esp32s3.md` (measured).
-4. Compare decode tok/s with the estimate (tier M: 33–59 tok/s); if far below, profile
+4. Compare decode tok/s with the estimate (shipped model = tier M2: 26–48 tok/s); if far below, profile
    with `/profile on` and optimise the dominant stage first (vision §18 O4–O8: ESP-DSP /
    ESP-NN dot products, PIE INT8 GEMV, dual-core only where it measurably wins).
 5. Try `CONFIG_SPIRAM_SPEED_120M` where the module supports it (research item 20).

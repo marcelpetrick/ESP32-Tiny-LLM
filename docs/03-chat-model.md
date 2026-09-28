@@ -50,7 +50,7 @@ steps. It must say so, and the training data teaches it to.
 
 ### Measured: does more capacity help this domain?
 
-We trained tier L (2.29 M parameters, 6 × 192) on exactly the data of the shipped tier-M
+We trained tier L (2.29 M parameters, 6 × 192) on exactly the data of the tier-M v2
 model (0.67 M). Result ([results](results/greenhouse-m.md)): held-out frames 88.8 % vs
 88.1 %, teacher paraphrases 82.3 % vs 85.3 %, everything else within 0.5 points. For the
 closed device domain, **data diversity is the bottleneck, not parameters** — tier L only

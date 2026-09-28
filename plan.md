@@ -14,9 +14,9 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 46
+    "Done" : 47
     "In progress" : 0
-    "Next (no hardware needed)" : 2
+    "Next (no hardware needed)" : 1
     "Waiting for the ESP32-S3 board" : 6
     "Planned research" : 14
 ```
@@ -44,7 +44,7 @@ flowchart LR
 | Training | device oracle, dialogue generator, teacher distillation (Qwen3.5-4B), BPE, PyTorch model, KD, pretraining data |
 | Runtime | C99, f32/W8A32/W8A8, int8 KV, RoPE, SwiGLU, GQA/MQA, zero heap after init, 99 % C coverage |
 | Verification | Python ↔ C logits within 1e-4; identical output to upstream llama2.c `run.c`; chip tokenizes like Python (QEMU) |
-| Model | 673 k params, 732 KiB INT8; 99 % in-distribution, 88 % unseen phrasing, 99.5 % multi-turn, 99.6 % safety |
+| Model | v3: 788 k params, 804 KiB INT8 (RoPE, 2048 vocab, picked by the sweep); 99 % in-distribution, 88–89 % unseen phrasing, 99.7 % multi-turn, 100 % safety |
 | Experiments | E1–E4 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain |
 | Sweep | 14 variants (vision M8), label-collision-free chart, [Pareto chart](docs/results/sweep.md): RoPE and 2048 vocab are the best levers |
 | Product | web simulator (README screenshots at idle host timings), Docker image on GHCR, firmware with embedded model and board benchmarks |
@@ -72,7 +72,6 @@ gantt
 
 | Item | Detail |
 |---|---|
-| Next model | retrain 4×128 + RoPE + 2048 vocab for the full budget |
 | Release checks | full pipeline, CI green, `docker pull` + run, clean tree |
 
 ## Waiting for the ESP32-S3 board (phase P10)
@@ -101,12 +100,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.7.3` |
-| Updated | 2026-09-28 18:18 UTC |
-| This commit | ci(docker): label the image GPL-3.0-or-later |
+| Version | `0.8.0` |
+| Updated | 2026-09-28 18:43 UTC |
+| This commit | feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep |
 
 Recent commits:
 
+- `200ceac` ci(docker): label the image GPL-3.0-or-later
 - `77728e8` docs: retake README screenshots at idle host timings
 - `bdf2dcb` fix(tools): place sweep chart labels without overlaps
 - `4400df9` docs(results): add the architecture sweep and the vision status page
@@ -114,6 +114,5 @@ Recent commits:
 - `5867c17` fix(tools): never stash plan.md in ship.sh
 - `f3abae9` docs: add plan.md status with charts and update it on every commit
 - `da0f102` fix(data): include the teacher model in the paraphrase cache key
-- `39ddb45` fix(runtime): keep only well-formed replies in the conversation history
 
 <!-- ship:end -->

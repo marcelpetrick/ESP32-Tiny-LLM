@@ -9,38 +9,27 @@
     "n_kv_heads": 4,
     "n_layers": 4,
     "norm_eps": 1e-05,
-    "pos_type": "learned",
+    "pos_type": "rope",
     "rope_theta": 10000.0,
-    "vocab_size": 1024
+    "vocab_size": 2048
   },
   "weight_dtype": "i8",
-  "file_bytes": 749568,
-  "sha256": "8c3521a9e37635cffcb98d029f1cbdeb7f9673149f5913503947b4deca7d7058",
-  "crc32": 1305438894,
-  "model_id": "588ff36d12949aeed523bf5126c6ae5e",
-  "params": 672896,
+  "file_bytes": 823232,
+  "sha256": "0cefdd2363046cd4d76233797e4227ae7928efcbc4eebb84c94dd0172cf0d4db",
+  "crc32": 1576028450,
+  "model_id": "355279e633392a1992b60d1543367fa6",
+  "params": 787584,
   "tensors": [
     {
       "name": "tok_emb",
       "dtype": "i8",
       "shape": [
-        1024,
+        2048,
         128
       ],
-      "offset": 5632,
-      "bytes": 131072,
-      "scale_offset": 136704
-    },
-    {
-      "name": "pos_emb",
-      "dtype": "f32",
-      "shape": [
-        128,
-        128
-      ],
-      "offset": 140800,
-      "bytes": 65536,
-      "scale_offset": null
+      "offset": 9664,
+      "bytes": 262144,
+      "scale_offset": 271808
     },
     {
       "name": "l0.attn_norm",
@@ -48,7 +37,7 @@
       "shape": [
         128
       ],
-      "offset": 206336,
+      "offset": 280000,
       "bytes": 512,
       "scale_offset": null
     },
@@ -59,9 +48,9 @@
         128,
         128
       ],
-      "offset": 206848,
+      "offset": 280512,
       "bytes": 16384,
-      "scale_offset": 223232
+      "scale_offset": 296896
     },
     {
       "name": "l0.wk",
@@ -70,9 +59,9 @@
         128,
         128
       ],
-      "offset": 223744,
+      "offset": 297408,
       "bytes": 16384,
-      "scale_offset": 240128
+      "scale_offset": 313792
     },
     {
       "name": "l0.wv",
@@ -81,9 +70,9 @@
         128,
         128
       ],
-      "offset": 240640,
+      "offset": 314304,
       "bytes": 16384,
-      "scale_offset": 257024
+      "scale_offset": 330688
     },
     {
       "name": "l0.wo",
@@ -92,9 +81,9 @@
         128,
         128
       ],
-      "offset": 257536,
+      "offset": 331200,
       "bytes": 16384,
-      "scale_offset": 273920
+      "scale_offset": 347584
     },
     {
       "name": "l0.mlp_norm",
@@ -102,7 +91,7 @@
       "shape": [
         128
       ],
-      "offset": 274432,
+      "offset": 348096,
       "bytes": 512,
       "scale_offset": null
     },
@@ -113,9 +102,9 @@
         256,
         128
       ],
-      "offset": 274944,
+      "offset": 348608,
       "bytes": 32768,
-      "scale_offset": 307712
+      "scale_offset": 381376
     },
     {
       "name": "l0.w2",
@@ -124,9 +113,9 @@
         128,
         256
       ],
-      "offset": 308736,
+      "offset": 382400,
       "bytes": 32768,
-      "scale_offset": 341504
+      "scale_offset": 415168
     },
     {
       "name": "l1.attn_norm",
@@ -134,7 +123,7 @@
       "shape": [
         128
       ],
-      "offset": 342016,
+      "offset": 415680,
       "bytes": 512,
       "scale_offset": null
     },
@@ -145,9 +134,9 @@
         128,
         128
       ],
-      "offset": 342528,
+      "offset": 416192,
       "bytes": 16384,
-      "scale_offset": 358912
+      "scale_offset": 432576
     },
     {
       "name": "l1.wk",
@@ -156,9 +145,9 @@
         128,
         128
       ],
-      "offset": 359424,
+      "offset": 433088,
       "bytes": 16384,
-      "scale_offset": 375808
+      "scale_offset": 449472
     },
     {
       "name": "l1.wv",
@@ -167,9 +156,9 @@
         128,
         128
       ],
-      "offset": 376320,
+      "offset": 449984,
       "bytes": 16384,
-      "scale_offset": 392704
+      "scale_offset": 466368
     },
     {
       "name": "l1.wo",
@@ -178,9 +167,9 @@
         128,
         128
       ],
-      "offset": 393216,
+      "offset": 466880,
       "bytes": 16384,
-      "scale_offset": 409600
+      "scale_offset": 483264
     },
     {
       "name": "l1.mlp_norm",
@@ -188,7 +177,7 @@
       "shape": [
         128
       ],
-      "offset": 410112,
+      "offset": 483776,
       "bytes": 512,
       "scale_offset": null
     },
@@ -199,9 +188,9 @@
         256,
         128
       ],
-      "offset": 410624,
+      "offset": 484288,
       "bytes": 32768,
-      "scale_offset": 443392
+      "scale_offset": 517056
     },
     {
       "name": "l1.w2",
@@ -210,9 +199,9 @@
         128,
         256
       ],
-      "offset": 444416,
+      "offset": 518080,
       "bytes": 32768,
-      "scale_offset": 477184
+      "scale_offset": 550848
     },
     {
       "name": "l2.attn_norm",
@@ -220,7 +209,7 @@
       "shape": [
         128
       ],
-      "offset": 477696,
+      "offset": 551360,
       "bytes": 512,
       "scale_offset": null
     },
@@ -231,9 +220,9 @@
         128,
         128
       ],
-      "offset": 478208,
+      "offset": 551872,
       "bytes": 16384,
-      "scale_offset": 494592
+      "scale_offset": 568256
     },
     {
       "name": "l2.wk",
@@ -242,9 +231,9 @@
         128,
         128
       ],
-      "offset": 495104,
+      "offset": 568768,
       "bytes": 16384,
-      "scale_offset": 511488
+      "scale_offset": 585152
     },
     {
       "name": "l2.wv",
@@ -253,9 +242,9 @@
         128,
         128
       ],
-      "offset": 512000,
+      "offset": 585664,
       "bytes": 16384,
-      "scale_offset": 528384
+      "scale_offset": 602048
     },
     {
       "name": "l2.wo",
@@ -264,9 +253,9 @@
         128,
         128
       ],
-      "offset": 528896,
+      "offset": 602560,
       "bytes": 16384,
-      "scale_offset": 545280
+      "scale_offset": 618944
     },
     {
       "name": "l2.mlp_norm",
@@ -274,7 +263,7 @@
       "shape": [
         128
       ],
-      "offset": 545792,
+      "offset": 619456,
       "bytes": 512,
       "scale_offset": null
     },
@@ -285,9 +274,9 @@
         256,
         128
       ],
-      "offset": 546304,
+      "offset": 619968,
       "bytes": 32768,
-      "scale_offset": 579072
+      "scale_offset": 652736
     },
     {
       "name": "l2.w2",
@@ -296,9 +285,9 @@
         128,
         256
       ],
-      "offset": 580096,
+      "offset": 653760,
       "bytes": 32768,
-      "scale_offset": 612864
+      "scale_offset": 686528
     },
     {
       "name": "l3.attn_norm",
@@ -306,7 +295,7 @@
       "shape": [
         128
       ],
-      "offset": 613376,
+      "offset": 687040,
       "bytes": 512,
       "scale_offset": null
     },
@@ -317,9 +306,9 @@
         128,
         128
       ],
-      "offset": 613888,
+      "offset": 687552,
       "bytes": 16384,
-      "scale_offset": 630272
+      "scale_offset": 703936
     },
     {
       "name": "l3.wk",
@@ -328,9 +317,9 @@
         128,
         128
       ],
-      "offset": 630784,
+      "offset": 704448,
       "bytes": 16384,
-      "scale_offset": 647168
+      "scale_offset": 720832
     },
     {
       "name": "l3.wv",
@@ -339,9 +328,9 @@
         128,
         128
       ],
-      "offset": 647680,
+      "offset": 721344,
       "bytes": 16384,
-      "scale_offset": 664064
+      "scale_offset": 737728
     },
     {
       "name": "l3.wo",
@@ -350,9 +339,9 @@
         128,
         128
       ],
-      "offset": 664576,
+      "offset": 738240,
       "bytes": 16384,
-      "scale_offset": 680960
+      "scale_offset": 754624
     },
     {
       "name": "l3.mlp_norm",
@@ -360,7 +349,7 @@
       "shape": [
         128
       ],
-      "offset": 681472,
+      "offset": 755136,
       "bytes": 512,
       "scale_offset": null
     },
@@ -371,9 +360,9 @@
         256,
         128
       ],
-      "offset": 681984,
+      "offset": 755648,
       "bytes": 32768,
-      "scale_offset": 714752
+      "scale_offset": 788416
     },
     {
       "name": "l3.w2",
@@ -382,9 +371,9 @@
         128,
         256
       ],
-      "offset": 715776,
+      "offset": 789440,
       "bytes": 32768,
-      "scale_offset": 748544
+      "scale_offset": 822208
     },
     {
       "name": "final_norm",
@@ -392,16 +381,16 @@
       "shape": [
         128
       ],
-      "offset": 749056,
+      "offset": 822720,
       "bytes": 512,
       "scale_offset": null
     }
   ],
   "training": {
-    "project_version": "0.3.2",
-    "git_revision": "163797d0798ceaa10b88e1847b2bc868366393bb-dirty",
-    "dataset_manifest_sha256": "e3abc6af5537ebfbd5a0bb3d5b70d8b867124d348b53ada057a6fad57441b2ea",
-    "tokenizer_sha256": "2f1571495e6978b59a538bc9ea93bdc73d9d4eff386438b4856add04564f76d7",
+    "project_version": "0.7.2",
+    "git_revision": "77728e8156505610b65858126273a5cd79361d93",
+    "dataset_manifest_sha256": "1417bd1d3811ee3803ffc5c964ba467074ab0924d958c1be64cd8db348447bac",
+    "tokenizer_sha256": "8b159421a80f7c12d7afb7272385c56ff6e3b7f7205bf48210bb82f3feb88a50",
     "model_config": {
       "ctx_len": 128,
       "d_ff": 256,
@@ -411,11 +400,11 @@
       "n_kv_heads": 4,
       "n_layers": 4,
       "norm_eps": 1e-05,
-      "pos_type": "learned",
+      "pos_type": "rope",
       "rope_theta": 10000.0,
-      "vocab_size": 1024
+      "vocab_size": 2048
     },
-    "params": 672896,
+    "params": 787584,
     "train_config": {
       "steps": 8000,
       "batch_size": 256,
@@ -432,171 +421,172 @@
     "schedule": "linear warm-up + cosine decay",
     "device": "cuda",
     "init_from": null,
-    "best_val_loss": 0.0016621707646041267,
-    "best_step": 7250,
+    "distillation": null,
+    "best_val_loss": 0.0013649002183024526,
+    "best_step": 8000,
     "steps_run": 8000,
     "history": [
       {
         "step": 250,
-        "train_loss": 0.3395121991634369,
-        "val_loss": 0.30507388348538705
+        "train_loss": 0.3029101490974426,
+        "val_loss": 0.2532515526642178
       },
       {
         "step": 500,
-        "train_loss": 0.13966263830661774,
-        "val_loss": 0.14229384593218156
+        "train_loss": 0.05961226671934128,
+        "val_loss": 0.06491353231697565
       },
       {
         "step": 750,
-        "train_loss": 0.06385641545057297,
-        "val_loss": 0.07027155360353271
+        "train_loss": 0.03343209624290466,
+        "val_loss": 0.03459881266871858
       },
       {
         "step": 1000,
-        "train_loss": 0.04268383979797363,
-        "val_loss": 0.049180155945265154
+        "train_loss": 0.023466050624847412,
+        "val_loss": 0.02342703943340631
       },
       {
         "step": 1250,
-        "train_loss": 0.03472934663295746,
-        "val_loss": 0.034687055678906245
+        "train_loss": 0.010784748010337353,
+        "val_loss": 0.016850136178595848
       },
       {
         "step": 1500,
-        "train_loss": 0.030306581407785416,
-        "val_loss": 0.025746655656512574
+        "train_loss": 0.01615668274462223,
+        "val_loss": 0.014281042293642222
       },
       {
         "step": 1750,
-        "train_loss": 0.024548497051000595,
-        "val_loss": 0.02071958670911054
+        "train_loss": 0.010552775114774704,
+        "val_loss": 0.013779855640982015
       },
       {
         "step": 2000,
-        "train_loss": 0.013933684676885605,
-        "val_loss": 0.018327219509547556
+        "train_loss": 0.00266700005158782,
+        "val_loss": 0.010753263144600263
       },
       {
         "step": 2250,
-        "train_loss": 0.016336452215909958,
-        "val_loss": 0.018554792154499723
+        "train_loss": 0.00965244323015213,
+        "val_loss": 0.008581532693025007
       },
       {
         "step": 2500,
-        "train_loss": 0.009508330374956131,
-        "val_loss": 0.016268539060686628
+        "train_loss": 0.0025814545806497335,
+        "val_loss": 0.00894627640669143
       },
       {
         "step": 2750,
-        "train_loss": 0.013736718334257603,
-        "val_loss": 0.013320810624476178
+        "train_loss": 0.0033685436937958,
+        "val_loss": 0.00898839691856515
       },
       {
         "step": 3000,
-        "train_loss": 0.011912981979548931,
-        "val_loss": 0.01144864769913116
+        "train_loss": 0.002564631635323167,
+        "val_loss": 0.007308223819784791
       },
       {
         "step": 3250,
-        "train_loss": 0.013732781633734703,
-        "val_loss": 0.01017286400509906
+        "train_loss": 0.005620159674435854,
+        "val_loss": 0.006688780230309952
       },
       {
         "step": 3500,
-        "train_loss": 0.009759057313203812,
-        "val_loss": 0.011177785975282987
+        "train_loss": 0.005413103848695755,
+        "val_loss": 0.005259535410050329
       },
       {
         "step": 3750,
-        "train_loss": 0.006890149787068367,
-        "val_loss": 0.008973958928332212
+        "train_loss": 0.002116263145580888,
+        "val_loss": 0.004911811681080193
       },
       {
         "step": 4000,
-        "train_loss": 0.0023888819850981236,
-        "val_loss": 0.007791976942374625
+        "train_loss": 0.0013894584262743592,
+        "val_loss": 0.003726200073808189
       },
       {
         "step": 4250,
-        "train_loss": 0.0036553493700921535,
-        "val_loss": 0.005982130214417884
+        "train_loss": 0.002121385419741273,
+        "val_loss": 0.003863838231499775
       },
       {
         "step": 4500,
-        "train_loss": 0.005900571588426828,
-        "val_loss": 0.006975318116478765
+        "train_loss": 0.004708956461399794,
+        "val_loss": 0.0029037597330320436
       },
       {
         "step": 4750,
-        "train_loss": 0.005508491303771734,
-        "val_loss": 0.006035414440565878
+        "train_loss": 0.00030351418536156416,
+        "val_loss": 0.002599256551172092
       },
       {
         "step": 5000,
-        "train_loss": 0.00619814358651638,
-        "val_loss": 0.005631396550735893
+        "train_loss": 0.0016407801304012537,
+        "val_loss": 0.0027259287427783066
       },
       {
         "step": 5250,
-        "train_loss": 0.0018277912167832255,
-        "val_loss": 0.004521901507611787
+        "train_loss": 0.00026899276417680085,
+        "val_loss": 0.0020135915211641673
       },
       {
         "step": 5500,
-        "train_loss": 0.00509233633056283,
-        "val_loss": 0.0038514222972124918
+        "train_loss": 0.0008332942961715162,
+        "val_loss": 0.0026797024650704352
       },
       {
         "step": 5750,
-        "train_loss": 0.0004443452344276011,
-        "val_loss": 0.004202610783100268
+        "train_loss": 6.831424252595752e-05,
+        "val_loss": 0.00249311582956032
       },
       {
         "step": 6000,
-        "train_loss": 0.0024108896031975746,
-        "val_loss": 0.003012358499751458
+        "train_loss": 0.00021841857233084738,
+        "val_loss": 0.0023885330760990055
       },
       {
         "step": 6250,
-        "train_loss": 0.0007069000857882202,
-        "val_loss": 0.0019964141730491585
+        "train_loss": 0.004065926652401686,
+        "val_loss": 0.001969112150693259
       },
       {
         "step": 6500,
-        "train_loss": 0.001905418699607253,
-        "val_loss": 0.002519602746697147
+        "train_loss": 0.00032317990553565323,
+        "val_loss": 0.0018306461637996884
       },
       {
         "step": 6750,
-        "train_loss": 0.0012692563468590379,
-        "val_loss": 0.002481907499066788
+        "train_loss": 0.00014872601605020463,
+        "val_loss": 0.0017460298897686779
       },
       {
         "step": 7000,
-        "train_loss": 0.0025659457314759493,
-        "val_loss": 0.0028529234766660524
+        "train_loss": 8.142022852553055e-05,
+        "val_loss": 0.0021585032830254143
       },
       {
         "step": 7250,
-        "train_loss": 0.0005280397599563003,
-        "val_loss": 0.0016621707646041267
+        "train_loss": 2.3343356588156894e-05,
+        "val_loss": 0.0016850402421582195
       },
       {
         "step": 7500,
-        "train_loss": 0.0002530007914174348,
-        "val_loss": 0.002225664862530103
+        "train_loss": 0.0022264064755290747,
+        "val_loss": 0.00175465654163263
       },
       {
         "step": 7750,
-        "train_loss": 0.0005428392323665321,
-        "val_loss": 0.002226576827075022
+        "train_loss": 9.499168299953453e-06,
+        "val_loss": 0.001499959951092059
       },
       {
         "step": 8000,
-        "train_loss": 4.0290611650561914e-05,
-        "val_loss": 0.002105043579408174
+        "train_loss": 1.1881546015501954e-05,
+        "val_loss": 0.0013649002183024526
       }
     ],
-    "train_seconds": 800.7
+    "train_seconds": 1057.8
   }
 }

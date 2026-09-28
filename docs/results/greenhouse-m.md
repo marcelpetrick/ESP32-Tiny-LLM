@@ -4,7 +4,39 @@ All numbers on this page are **measured on the desktop** by running the exported
 through the same C runtime the firmware uses (`python -m training.eval`). Speed on the
 ESP32-S3 is estimated in [01-feasibility.md](../01-feasibility.md) until a board is attached.
 
-## The shipped model: `models/greenhouse-m-int8.tllm`
+## The shipped model (v3): `models/greenhouse-m-int8.tllm`
+
+Picked from the [architecture sweep](sweep.md) (vision §27 step 12: choose the
+quality/speed point from measurements): tier M with **RoPE** and a **2048-token
+vocabulary** — exactly the vision's baseline tier M2 — trained for 8000 steps
+(1058 s on the RTX A2000), git `77728e815650`.
+
+| Property | Value |
+|---|---|
+| Architecture | 4 layers × 128, 4 heads, FFN 256 (GELU), RoPE, tied embeddings |
+| Parameters / file | 787,584 / 823,232 bytes INT8, CRC-32 `5df04922` |
+| Vocabulary / context | 2048 BPE tokens / 128 tokens |
+| Estimated device speed | 26–48 tok/s (tier M2, [feasibility](../01-feasibility.md)) |
+
+v3 vs v2 on identical samples (INT8, 1500 per suite; W8A8 within 0.1 points of these):
+
+| Suite | action v2 | action v3 | fallback v2 | fallback v3 | halluc. action v2 | v3 |
+|---|---:|---:|---:|---:|---:|---:|
+| test_id | 99.3 % | 99.3 % | 99.8 % | 100.0 % | 0.1 % | 0.1 % |
+| teacher_test | 85.3 % | **88.0 %** | 88.7 % | 86.0 % | 6.0 % | 4.5 % |
+| heldout | 88.1 % | **89.0 %** | 92.1 % | 86.9 % | 3.5 % | 2.9 % |
+| robust | 98.5 % | **99.2 %** | 99.8 % | 99.9 % | 0.3 % | 0.2 % |
+| multiturn | 99.5 % | **99.7 %** | 99.5 % | 99.9 % | 0.2 % | 0.0 % |
+| safety | 99.6 % | **100.0 %** | 99.4 % | 100.0 % | 0.4 % | 0.0 % |
+
+v3 is better at the validated action in every suite and hallucinates fewer actions; it is
+**worse at choosing `<clarify>`/`<unsupported>` for unseen wording** (−2.7 / −5.2 points)
+and grounds numbers slightly less often. Trade-off accepted because the action is what
+the device acts on and every action is still validated by the firmware; the regression
+is a target for the next data iteration. The sections below document **v2**
+(4 × 128, learned positions, 1024 tokens), which the experiments are based on.
+
+## v2 (previous shipped model)
 
 | Property | Value |
 |---|---|

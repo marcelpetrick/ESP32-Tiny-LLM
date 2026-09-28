@@ -26,8 +26,8 @@ marked done that is not in the repository with a test or a reproducible script.
 | one ESP32-S3, no network | firmware is fully local; runs in QEMU; board pending |
 | custom, inspectable decoder transformer | done — every stage is a named C function ([05-architecture.md](05-architecture.md) §2) |
 | local tokenization, causal attention, KV cache, autoregressive generation | done |
-| ~1 MB INT8 class model | done — 732 KiB |
-| interactive speed | estimated 33–59 tok/s; to be measured |
+| ~1 MB INT8 class model | done — 804 KiB |
+| interactive speed | estimated 26–48 tok/s; to be measured |
 | reproducible benchmark numbers | runner + matrix ready (`tools/serial_runner.py`); host dry run works |
 
 | Useful-model success | Status |
