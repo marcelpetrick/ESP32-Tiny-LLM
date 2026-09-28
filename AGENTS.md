@@ -44,7 +44,8 @@ flowchart LR
    (Python ↔ C ↔ firmware) ships with an integration test; user-visible flows ship with an
    end-to-end test.
 5. **Run the full local pipeline** (`./localPipeline.sh`). Never commit red.
-6. **Bump the version, commit, push**, then confirm GitHub Actions is green.
+6. **Update [`plan.md`](plan.md)**, bump the version, commit, push (`scripts/ship.sh` does
+   the mechanical parts), then confirm GitHub Actions is green.
 
 ## 2. Non-negotiable rules
 
@@ -97,6 +98,12 @@ weakens this boundary is rejected regardless of test results.
   `scripts/bump_version.sh patch|minor`. Pre-1.0 while the vision is being realised.
 - Push after every green commit. If CI goes red, the next commit fixes it — nothing else
   lands on top of a red build.
+- **Every commit updates [`plan.md`](plan.md).** `scripts/ship.sh` refreshes its *Current
+  state* block (version, date, this commit, recent history) automatically; when a work item
+  changes state (started, done, blocked, dropped), also move it between the *Done*, *In
+  progress*, *Next*, *Waiting for the board* and *Planned research* tables and adjust the
+  status pie chart in the same commit. `plan.md` is the answer to "what is done, what is
+  left" — keep it true.
 
 ### 2.5 Quality gates
 
@@ -125,6 +132,7 @@ Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
 | Path | Purpose |
 |---|---|
 | `vision.md` | original project vision (read-only reference; changes need the maintainer) |
+| `plan.md` | living status: done / in progress / next / waiting for hardware / research, updated every commit |
 | `docs/` | feasibility study, research angles, architecture, implementation plan |
 | `training/` | Python: tokenizer, datasets, PyTorch model, training, export, quantization, eval |
 | `runtime/` | portable C99 inference runtime (`tinyllm`) + host CLI + C unit tests |

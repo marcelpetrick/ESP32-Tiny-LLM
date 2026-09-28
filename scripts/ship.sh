@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
 #
-# ship.sh — run the full pipeline on the staged change, bump the version, commit, push.
+# ship.sh — run the full pipeline on the staged change, bump the version, update
+# plan.md, commit, push.
 #
 # Usage: scripts/ship.sh [--minor|--major] [--no-push] "type(scope): subject" [BODY]
 #
@@ -14,7 +15,7 @@ set -euo pipefail
 # shellcheck source=scripts/common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
-usage() { sed -n '4,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '4,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
 part="patch"
 push=1
@@ -53,7 +54,8 @@ trap restore EXIT
 ./localPipeline.sh || die "pipeline red — not committing"
 
 scripts/bump_version.sh "${part}"
-git add VERSION pyproject.toml uv.lock
+scripts/update_plan.sh "${subject}" # AGENTS.md §2.4: every commit updates plan.md
+git add VERSION pyproject.toml uv.lock plan.md
 if [[ -n "${body}" ]]; then
     git commit -q -m "${subject}" -m "${body}"
 else

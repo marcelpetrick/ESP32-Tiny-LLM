@@ -6,7 +6,8 @@ Small, documented helpers for humans, agents, and CI. Every script prints its us
 | Script | Purpose |
 |---|---|
 | [`../localPipeline.sh`](../localPipeline.sh) | the full quality gate (`--list` shows stages); CI runs exactly this |
-| [`ship.sh`](ship.sh) | pipeline on the staged change → bump version → conventional commit → push |
+| [`ship.sh`](ship.sh) | pipeline on the staged change → bump version → update `plan.md` → conventional commit → push |
+| [`update_plan.sh`](update_plan.sh) | refresh the auto-generated *Current state* block of `plan.md` (run by `ship.sh`) |
 | [`bump_version.sh`](bump_version.sh) | bump `VERSION` (patch/minor/major), mirrored into `pyproject.toml` and `uv.lock` |
 | [`build_runtime.sh`](build_runtime.sh) | optimised host build of the C runtime (`libtinyllm.so`, `tinyllm-cli`) |
 | [`c_tests.sh`](c_tests.sh) | C unit tests under ASan/UBSan, gcovr coverage gate (≥ 95 %), release build |
