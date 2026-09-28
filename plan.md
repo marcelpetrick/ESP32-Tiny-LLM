@@ -14,9 +14,9 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 40
+    "Done" : 41
     "In progress" : 1
-    "Next (no hardware needed)" : 4
+    "Next (no hardware needed)" : 3
     "Waiting for the ESP32-S3 board" : 6
     "Planned research" : 14
 ```
@@ -48,6 +48,7 @@ flowchart LR
 | Experiments | E1–E4 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain |
 | Product | web simulator, Docker image on GHCR, firmware with embedded model and board benchmarks |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
+| Repository page | `/githubAbout`: About text and 10 topics applied, each claim traced to a file |
 | Process | `plan.md` + AGENTS.md rule; `ship.sh` refreshes it on every commit (never stashes it) |
 
 ## In progress
@@ -69,8 +70,7 @@ gantt
     commit 09 vision status            :a2, after a1, 10m
     retake README screenshots          :a3, after a1, 10m
     section Release
-    /githubAbout + repo metadata       :a4, after a2, 10m
-    final vision check, CI + GHCR pull :a5, after a4, 20m
+    final vision check, CI + GHCR pull :a5, after a2, 20m
 ```
 
 | Item | Detail |
@@ -78,7 +78,7 @@ gantt
 | Sweep results page | table + Pareto chart from `tools.sweep --report` |
 | Vision status page | `docs/09-vision-status.md` (links the sweep page) |
 | Screenshots | retake once the GPU is idle (host timings) |
-| Release checks | `/githubAbout`, full pipeline, CI green, `docker pull` + run, clean tree |
+| Release checks | full pipeline, CI green, `docker pull` + run, clean tree |
 
 ## Waiting for the ESP32-S3 board (phase P10)
 
@@ -106,12 +106,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.6.17` |
-| Updated | 2026-09-28 14:25 UTC |
-| This commit | fix(tools): never stash plan.md in ship.sh |
+| Version | `0.6.18` |
+| Updated | 2026-09-28 14:29 UTC |
+| This commit | docs(plan): record the GitHub About text and topics |
 
 Recent commits:
 
+- `5867c17` fix(tools): never stash plan.md in ship.sh
 - `f3abae9` docs: add plan.md status with charts and update it on every commit
 - `da0f102` fix(data): include the teacher model in the paraphrase cache key
 - `39ddb45` fix(runtime): keep only well-formed replies in the conversation history
@@ -119,6 +120,5 @@ Recent commits:
 - `61a240d` fix(tools): skip model manifests in the experiment report
 - `26d84cf` docs: record the tier-L capacity result and the full console command set
 - `d43f52d` fix(web): send a strict Content-Security-Policy
-- `c9562b9` feat(tools): add experiment comparison table
 
 <!-- ship:end -->
