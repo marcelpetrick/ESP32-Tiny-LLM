@@ -33,8 +33,9 @@ playwright-report/
 # Pipeline and training artefacts
 .pipeline/
 runs/
-data/cache/
-data/generated/
+# generated datasets and caches; only the reviewed teacher paraphrases are committed
+data/*
+!data/teacher/
 *.pt
 !tests/**/*.pt
 .venv-gpu/
