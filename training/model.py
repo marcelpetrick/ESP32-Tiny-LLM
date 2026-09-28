@@ -141,10 +141,11 @@ class Block(nn.Module):
         att = F.scaled_dot_product_attention(q, k, v, is_causal=True)
         x = x + self.wo(att.transpose(1, 2).reshape(b, t, cfg.d_model))
         h = self.mlp_norm(x)
-        if self.w3 is not None:
-            m = F.silu(self.w1(h)) * self.w3(h)
-        else:
-            m = F.gelu(self.w1(h), approximate="tanh")
+        m = (
+            F.silu(self.w1(h)) * self.w3(h)
+            if self.w3 is not None
+            else F.gelu(self.w1(h), approximate="tanh")
+        )
         out: Tensor = x + self.w2(m)
         return out
 

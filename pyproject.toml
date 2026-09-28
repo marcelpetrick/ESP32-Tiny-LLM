@@ -8,7 +8,7 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 authors = [{ name = "Marcel Petrick", email = "mail@marcelpetrick.it" }]
 requires-python = ">=3.12"
-version = "0.0.14"
+version = "0.1.0"
 dependencies = []
 
 [dependency-groups]
@@ -47,6 +47,10 @@ extend-exclude = ["third_party", "node_modules", ".pipeline"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "PL", "PT", "C4"]
 ignore = ["PLR0913", "PLR0917", "PLR2004", "PLR0911", "PLR0912", "PLR0915"]
+
+[tool.ruff.lint.pycodestyle]
+# The formatter wraps code at 100 columns; long f-strings/tables may go to 120.
+max-line-length = 120
 
 [tool.ruff.lint.per-file-ignores]
 # Table-driven tests read better with long parametrize rows.
