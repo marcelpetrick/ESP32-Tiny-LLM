@@ -37,3 +37,4 @@ data/cache/
 data/generated/
 *.pt
 !tests/**/*.pt
+.venv-gpu/
