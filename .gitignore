@@ -1,0 +1,38 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.egg-info/
+dist/
+
+# C / CMake
+build/
+build-*/
+*.o
+*.gcda
+*.gcno
+
+# ESP-IDF
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/managed_components/
+
+# Node / e2e
+node_modules/
+test-results/
+playwright-report/
+
+# Pipeline and training artefacts
+.pipeline/
+runs/
+data/cache/
+*.pt
+!tests/**/*.pt
