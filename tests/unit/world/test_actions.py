@@ -34,6 +34,7 @@ def test_parse_and_format_round_trip() -> None:
         "ack=0",
         "diag=unknown",
         "fan=x",
+        "fan=\u00b2",
     ],
 )
 def test_parse_rejects(body: str) -> None:

@@ -68,7 +68,7 @@ def parse_action(body: str) -> Action:
                 raise ActionParseError(f"unknown diagnosis {raw!r}")
             pairs.append((key, raw))
             continue
-        if not raw.isdigit():
+        if not (raw.isascii() and raw.isdigit()):
             raise ActionParseError(f"value for {key} must be a non-negative integer: {raw!r}")
         value = int(raw)
         low, high, step = _INT_RANGES[key]
