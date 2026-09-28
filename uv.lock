@@ -238,7 +238,7 @@ wheels = [
 
 [[package]]
 name = "esp32-tiny-llm"
-version = "0.0.9"
+version = "0.0.10"
 source = { virtual = "." }
 
 [package.dev-dependencies]
