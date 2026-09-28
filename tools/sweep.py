@@ -247,13 +247,29 @@ def svg(points: list[dict[str, Any]], width: int = 720, height: int = 440) -> st
     if len(frontier) > 1:
         path = " ".join(f"{sx(p['reply_ms']):.1f},{sy(100 * p['quality']):.1f}" for p in frontier)
         parts.append(f'<polyline class="ln" points="{path}"/>')
+    boxes: list[tuple[float, float, float, float]] = []  # occupied rectangles (labels + points)
     for p in points:
+        x, y = sx(p["reply_ms"]), sy(100 * p["quality"])
+        boxes.append((x - 6, y - 6, x + 6, y + 6))
+
+    def free(box: tuple[float, float, float, float]) -> bool:
+        return all(box[2] < b[0] or box[0] > b[2] or box[3] < b[1] or box[1] > b[3] for b in boxes)
+
+    for p in sorted(points, key=lambda q: (q["name"] not in front, q["name"])):
         cls = "fr" if p["name"] in front else "pt"
         cx, cy = sx(p["reply_ms"]), sy(100 * p["quality"])
         parts.append(
             f'<circle class="{cls}" cx="{cx:.1f}" cy="{cy:.1f}" r="5"><title>{p["name"]}</title></circle>'
         )
-        parts.append(f'<text class="t" x="{cx + 8:.1f}" y="{cy + 4:.1f}">{p["name"]}</text>')
+        w = 7.0 * len(p["name"])
+        # right, above-right, below-right, left, above-left, below-left (text baseline positions)
+        candidates = [(cx + 8, cy + 4), (cx + 8, cy - 9), (cx + 8, cy + 17), (cx - 8 - w, cy + 4)]
+        candidates += [(cx - 8 - w, cy - 9), (cx - 8 - w, cy + 17)]
+        lx, ly = next(
+            ((x, y) for x, y in candidates if free((x, y - 11, x + w, y + 2))), candidates[0]
+        )
+        boxes.append((lx, ly - 11, lx + w, ly + 2))
+        parts.append(f'<text class="t" x="{lx:.1f}" y="{ly:.1f}">{p["name"]}</text>')
     parts.append("</svg>")
     return "\n".join(parts) + "\n"
 

@@ -14,9 +14,9 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 44
+    "Done" : 46
     "In progress" : 0
-    "Next (no hardware needed)" : 3
+    "Next (no hardware needed)" : 2
     "Waiting for the ESP32-S3 board" : 6
     "Planned research" : 14
 ```
@@ -46,8 +46,8 @@ flowchart LR
 | Verification | Python ↔ C logits within 1e-4; identical output to upstream llama2.c `run.c`; chip tokenizes like Python (QEMU) |
 | Model | 673 k params, 732 KiB INT8; 99 % in-distribution, 88 % unseen phrasing, 99.5 % multi-turn, 99.6 % safety |
 | Experiments | E1–E4 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain |
-| Sweep | 14 variants (vision M8), [Pareto chart](docs/results/sweep.md): RoPE and 2048 vocab are the best levers |
-| Product | web simulator, Docker image on GHCR, firmware with embedded model and board benchmarks |
+| Sweep | 14 variants (vision M8), label-collision-free chart, [Pareto chart](docs/results/sweep.md): RoPE and 2048 vocab are the best levers |
+| Product | web simulator (README screenshots at idle host timings), Docker image on GHCR, firmware with embedded model and board benchmarks |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
 | Repository page | `/githubAbout`: About text and 10 topics applied, each claim traced to a file |
 | Process | `plan.md` + AGENTS.md rule; `ship.sh` refreshes it on every commit (never stashes it) |
@@ -65,19 +65,14 @@ gantt
     dateFormat HH:mm
     axisFormat %H:%M
     section Research
-    finish sweep, write sweep.md       :a1, 00:00, 60m
-    section Docs
-    commit 09 vision status            :a2, after a1, 10m
-    retake README screenshots          :a3, after a1, 10m
+    retrain 4x128 + RoPE + 2048 vocab  :a1, 00:00, 30m
     section Release
-    final vision check, CI + GHCR pull :a5, after a2, 20m
+    final vision check, CI + GHCR pull :a5, after a1, 20m
 ```
 
 | Item | Detail |
 |---|---|
 | Next model | retrain 4×128 + RoPE + 2048 vocab for the full budget |
-| Sweep chart | fix overlapping labels in `tools/sweep.py` SVG |
-| Screenshots | retake once the GPU is idle (host timings) |
 | Release checks | full pipeline, CI green, `docker pull` + run, clean tree |
 
 ## Waiting for the ESP32-S3 board (phase P10)
@@ -106,12 +101,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.7.0` |
-| Updated | 2026-09-28 15:12 UTC |
-| This commit | docs(results): add the architecture sweep and the vision status page |
+| Version | `0.7.1` |
+| Updated | 2026-09-28 18:12 UTC |
+| This commit | fix(tools): place sweep chart labels without overlaps |
 
 Recent commits:
 
+- `4400df9` docs(results): add the architecture sweep and the vision status page
 - `c6d8ed9` docs(plan): record the GitHub About text and topics
 - `5867c17` fix(tools): never stash plan.md in ship.sh
 - `f3abae9` docs: add plan.md status with charts and update it on every commit
@@ -119,6 +115,5 @@ Recent commits:
 - `39ddb45` fix(runtime): keep only well-formed replies in the conversation history
 - `0597e39` docs(results): add the M6 distillation experiment comparison
 - `61a240d` fix(tools): skip model manifests in the experiment report
-- `26d84cf` docs: record the tier-L capacity result and the full console command set
 
 <!-- ship:end -->
