@@ -36,6 +36,7 @@ STAGES=(
     "py-types|mypy --strict"
     "py-tests|pytest unit + integration with coverage >= 95 %"
     "e2e|browser end-to-end tests (Playwright + Chromium) against the web simulator"
+    "docker|build the web simulator image and smoke-test it"
 )
 
 usage() { sed -n '4,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
@@ -99,6 +100,8 @@ stage_py-tests() {
     uv run --frozen pytest -m "not e2e" --cov --cov-report=term --cov-report=xml:.pipeline/coverage.xml \
         --cov-report=html:.pipeline/htmlcov --junitxml=.pipeline/pytest.xml
 }
+
+stage_docker() { scripts/docker_smoke.sh; }
 
 stage_e2e() { uv run --frozen pytest -m e2e -p no:cacheprovider --browser chromium; }
 

@@ -13,6 +13,7 @@ Small, documented helpers for humans, agents, and CI. Every script prints its us
 | [`check_headers.sh`](check_headers.sh) | verify SPDX GPL-3.0-or-later headers on authored files |
 | [`check_docs.sh`](check_docs.sh) | markdownlint, relative-link check, Mermaid rendering, required docs present |
 | [`gpu_env.sh`](gpu_env.sh) | create `.venv-gpu` with the CUDA build of the pinned PyTorch for GPU training |
+| [`docker_smoke.sh`](docker_smoke.sh) | build the Docker image, check health, chat, story and CLI inside the container |
 | [`fix.sh`](fix.sh) | apply automatic fixes (ruff format/fix, clang-format, markdownlint --fix) |
 | [`render_mermaid.sh`](render_mermaid.sh) | render all Mermaid diagrams to `.pipeline/mermaid/` (fails on syntax errors) |
 | [`common.sh`](common.sh) | shared helpers (`log`, `die`, `find_chrome`) sourced by the others |

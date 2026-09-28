@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+.git
+.venv
+.venv-gpu
+.pipeline
+build
+node_modules
+runs
+data
+**/__pycache__
+*.pyc
