@@ -8,7 +8,7 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 authors = [{ name = "Marcel Petrick", email = "mail@marcelpetrick.it" }]
 requires-python = ">=3.12"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = []
 
 [dependency-groups]
@@ -25,6 +25,7 @@ dev = [
     "pytest==9.1.1",
     "pytest-cov==7.1.0",
     "pytest-playwright==0.9.0",
+    "pyserial==3.5",
     "ruff==0.16.9",
     "shellcheck-py==0.11.0.1",
 ]
@@ -66,6 +67,10 @@ exclude = ["^third_party/", "^node_modules/", "^\\.pipeline/"]
 [[tool.mypy.overrides]]
 module = ["torch", "torch.*"]
 follow_imports = "silent"
+
+[[tool.mypy.overrides]]
+module = ["serial"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
