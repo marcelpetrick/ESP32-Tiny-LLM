@@ -14,6 +14,8 @@ Small, documented helpers for humans, agents, and CI. Every script prints its us
 | [`check_docs.sh`](check_docs.sh) | markdownlint, relative-link check, Mermaid rendering, required docs present |
 | [`gpu_env.sh`](gpu_env.sh) | create `.venv-gpu` with the CUDA build of the pinned PyTorch for GPU training |
 | [`docker_smoke.sh`](docker_smoke.sh) | build the Docker image, check health, chat, story and CLI inside the container |
+| [`firmware_build.sh`](firmware_build.sh) | build the ESP32-S3 firmware in the pinned `espressif/idf` container (any `idf.py` args) |
+| [`firmware_qemu.sh`](firmware_qemu.sh) | boot the firmware in Espressif's QEMU and check boot, `/model-info` and a chat reply |
 | [`fix.sh`](fix.sh) | apply automatic fixes (ruff format/fix, clang-format, markdownlint --fix) |
 | [`render_mermaid.sh`](render_mermaid.sh) | render all Mermaid diagrams to `.pipeline/mermaid/` (fails on syntax errors) |
 | [`common.sh`](common.sh) | shared helpers (`log`, `die`, `find_chrome`) sourced by the others |

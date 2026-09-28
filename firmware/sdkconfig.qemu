@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Overlay for the QEMU smoke test only: Espressif's QEMU emulates quad (not octal) PSRAM.
+# Used as SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.qemu" by scripts/firmware_qemu.sh.
+CONFIG_SPIRAM_MODE_QUAD=y
+# CONFIG_SPIRAM_MODE_OCT is not set

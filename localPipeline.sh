@@ -37,6 +37,7 @@ STAGES=(
     "py-tests|pytest unit + integration with coverage >= 95 %"
     "e2e|browser end-to-end tests (Playwright + Chromium) against the web simulator"
     "docker|build the web simulator image and smoke-test it"
+    "firmware|ESP-IDF build (official container) + QEMU boot and console smoke test"
 )
 
 usage() { sed -n '4,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
@@ -102,6 +103,8 @@ stage_py-tests() {
 }
 
 stage_docker() { scripts/docker_smoke.sh; }
+
+stage_firmware() { scripts/firmware_build.sh build && scripts/firmware_qemu.sh; }
 
 stage_e2e() { uv run --frozen pytest -m e2e -p no:cacheprovider --browser chromium; }
 
