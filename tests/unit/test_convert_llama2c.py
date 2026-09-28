@@ -19,7 +19,7 @@ STORIES = REPO_ROOT / "models" / "third_party" / "stories260K"
 def test_convert_stories260k(
     tmp_path: Path, dtype: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    out = tmp_path / "s.tllm"
+    out = tmp_path / "new-dir" / "s.tllm"
     args = [
         str(STORIES / "stories260K.bin"),
         str(STORIES / "tok512.bin"),

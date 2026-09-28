@@ -90,6 +90,7 @@ def read_checkpoint(path: Path) -> tuple[ModelConfig, dict[str, np.ndarray]]:
 
 def convert(checkpoint: Path, tokenizer: Path, out: Path, dtype: str = "f32") -> dict[str, object]:
     """Write ``out`` and return its manifest."""
+    out.parent.mkdir(parents=True, exist_ok=True)
     cfg, tensors = read_checkpoint(checkpoint)
     tok = ScoredTokenizer.from_llama2c(tokenizer, cfg.vocab_size)
     return write_tllm(out, cfg, tensors, tok, dtype)
