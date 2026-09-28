@@ -35,9 +35,9 @@ def capture(url: str, out: Path, dark: bool) -> None:
         for i, text in enumerate(SCRIPT, start=1):
             page.fill("[data-testid=input]", text)
             page.click("[data-testid=send]")
-            page.wait_for_function(
-                f"document.querySelectorAll('[data-testid=msg-bot]').length=={i}"
-            )
+            page.locator("[data-testid=msg-bot]").nth(
+                i - 1
+            ).wait_for()  # CSP forbids eval-based waits
         page.screenshot(path=str(out), full_page=True)
         browser.close()
 

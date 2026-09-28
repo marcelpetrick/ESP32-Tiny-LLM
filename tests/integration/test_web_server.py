@@ -42,6 +42,8 @@ def test_info_health_and_static(web_url: str) -> None:
     assert get(f"{web_url}/healthz") == (200, {"ok": True})
     status, page = get(f"{web_url}/")
     assert status == 200
+    with urllib.request.urlopen(f"{web_url}/") as response:
+        assert "default-src 'self'" in response.headers["Content-Security-Policy"]
     assert "<title>ESP32 Tiny LLM</title>" in page
     assert get(f"{web_url}/static/app.js")[0] == 200
     assert get(f"{web_url}/static/../server.py")[0] == 404
