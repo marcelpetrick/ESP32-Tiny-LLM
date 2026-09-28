@@ -105,3 +105,32 @@ def test_cli(tiny_data: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     )
     assert code == 0
     assert "best_val_loss" in capsys.readouterr().out
+
+
+def test_masked_kl_is_zero_for_identical_and_positive_otherwise() -> None:
+    a = torch.randn(2, 3, 5)
+    mask = torch.ones(2, 3)
+    assert float(tr.masked_kl(a, a, mask, 2.0)) == pytest.approx(0.0, abs=1e-6)
+    assert float(tr.masked_kl(a, torch.randn(2, 3, 5), mask, 2.0)) > 0.0
+
+
+def test_logit_distillation_run(tiny_data: Path, tiny_run: Path, tmp_path: Path) -> None:
+    ckpt = torch.load(tiny_run / "best.pt", map_location="cpu", weights_only=False)
+    cfg = ModelConfig.from_json(ckpt["config"])
+    manifest = tr.train(
+        tiny_data,
+        tmp_path,
+        cfg,
+        tr.TrainConfig(steps=2, batch_size=4, warmup=1, eval_every=1),
+        "cpu",
+        log=False,
+        teacher_ckpt=tiny_run / "best.pt",
+        kd_alpha=0.7,
+        kd_temp=3.0,
+    )
+    assert manifest["distillation"] == {
+        "teacher": str(tiny_run / "best.pt"),
+        "alpha": 0.7,
+        "temperature": 3.0,
+        "loss": "CE + a*T^2*KL",
+    }

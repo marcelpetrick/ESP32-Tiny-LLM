@@ -79,6 +79,28 @@ def masked_loss(logits: torch.Tensor, targets: torch.Tensor, mask: torch.Tensor)
     return (loss * flat).sum() / flat.sum().clamp_min(1.0)
 
 
+def masked_kl(
+    student: torch.Tensor, teacher: torch.Tensor, mask: torch.Tensor, temperature: float
+) -> torch.Tensor:
+    """KL(teacher || student) on softened distributions, averaged over masked positions (Hinton et al.)."""
+    s = F.log_softmax(student / temperature, dim=-1)
+    t = F.log_softmax(teacher / temperature, dim=-1)
+    kl = (t.exp() * (t - s)).sum(-1)
+    flat = mask.reshape(kl.shape)
+    return (kl * flat).sum() / flat.sum().clamp_min(1.0)
+
+
+def _load_teacher(path: Path, device: torch.device) -> TinyLM:
+    """A frozen teacher (e.g. a bigger model trained on the same tokenizer)."""
+    ckpt = torch.load(path, map_location=device, weights_only=False)
+    teacher = TinyLM(ModelConfig.from_json(ckpt["config"])).to(device)
+    teacher.load_state_dict(ckpt["model"])
+    teacher.eval()
+    for p in teacher.parameters():
+        p.requires_grad_(False)
+    return teacher
+
+
 def lr_at(step: int, cfg: TrainConfig) -> float:
     """Linear warm-up then cosine decay to ``min_lr_ratio * lr``."""
     if step < cfg.warmup:
@@ -144,6 +166,9 @@ def train(
     device_name: str | None = None,
     init_from: Path | None = None,
     log: bool = True,
+    teacher_ckpt: Path | None = None,
+    kd_alpha: float = 0.5,
+    kd_temp: float = 2.0,
 ) -> dict[str, object]:
     """Run training; returns the run manifest (also saved as ``out_dir/manifest.json``)."""
     torch.manual_seed(cfg.seed)
@@ -153,6 +178,7 @@ def train(
     train_data = load_split(data_dir / "train.jsonl", model_cfg.ctx_len)
     val_data = load_split(data_dir / "val.jsonl", model_cfg.ctx_len)
     model = TinyLM(model_cfg).to(device)
+    teacher = _load_teacher(teacher_ckpt, device) if teacher_ckpt is not None else None
     if init_from is not None:
         model.load_state_dict(
             torch.load(init_from, map_location=device, weights_only=False)["model"]
@@ -173,6 +199,14 @@ def train(
         "schedule": "linear warm-up + cosine decay",
         "device": str(device),
         "init_from": str(init_from) if init_from else None,
+        "distillation": None
+        if teacher is None
+        else {
+            "teacher": str(teacher_ckpt),
+            "alpha": kd_alpha,
+            "temperature": kd_temp,
+            "loss": "CE + a*T^2*KL",
+        },
     }
     started = time.time()
     x_all, y_all, m_all = train_data
@@ -185,6 +219,14 @@ def train(
         with torch.autocast(device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"):
             logits = model(xb)
         loss = masked_loss(logits.float(), yb, mb)
+        if teacher is not None:
+            with (
+                torch.no_grad(),
+                torch.autocast(device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"),
+            ):
+                t_logits = teacher(xb)
+            kd = masked_kl(logits.float(), t_logits.float(), mb, kd_temp)
+            loss = (1.0 - kd_alpha) * loss + kd_alpha * kd_temp**2 * kd
         optimizer.zero_grad(set_to_none=True)
         loss.backward()  # type: ignore[no-untyped-call]
         torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.grad_clip)
@@ -265,13 +307,28 @@ def main(argv: list[str] | None = None) -> int:
         )
     parser.add_argument("--device", default=None)
     parser.add_argument("--init-from", type=Path, default=None)
+    parser.add_argument(
+        "--teacher", type=Path, default=None, help="checkpoint for logit distillation"
+    )
+    parser.add_argument("--kd-alpha", type=float, default=0.5)
+    parser.add_argument("--kd-temp", type=float, default=2.0)
     args = parser.parse_args(argv)
     tokenizer = Tokenizer.load(args.data / "tokenizer.json")
     model_cfg = model_config_from_args(args, tokenizer.vocab_size)
     train_cfg = TrainConfig(
         **{f.name: getattr(args, f.name) for f in dataclasses.fields(TrainConfig)}
     )
-    manifest = train(args.data, args.out, model_cfg, train_cfg, args.device, args.init_from)
+    manifest = train(
+        args.data,
+        args.out,
+        model_cfg,
+        train_cfg,
+        args.device,
+        args.init_from,
+        teacher_ckpt=args.teacher,
+        kd_alpha=args.kd_alpha,
+        kd_temp=args.kd_temp,
+    )
     print(
         json.dumps(
             {k: manifest[k] for k in ("params", "best_val_loss", "best_step", "train_seconds")}
