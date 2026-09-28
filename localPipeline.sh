@@ -35,6 +35,7 @@ STAGES=(
     "py-lint|ruff check"
     "py-types|mypy --strict"
     "py-tests|pytest unit + integration with coverage >= 95 %"
+    "e2e|browser end-to-end tests (Playwright + Chromium) against the web simulator"
 )
 
 usage() { sed -n '4,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
@@ -56,7 +57,8 @@ done
 
 # ---------------------------------------------------------------- stage bodies
 stage_setup() {
-    uv sync --frozen && npm ci --no-audit --no-fund --ignore-scripts
+    uv sync --frozen && npm ci --no-audit --no-fund --ignore-scripts &&
+        uv run --frozen playwright install chromium
 }
 
 stage_headers() { scripts/check_headers.sh; }
@@ -94,9 +96,11 @@ stage_py-lint() { uv run --frozen ruff check .; }
 stage_py-types() { uv run --frozen mypy training tools web tests; }
 
 stage_py-tests() {
-    uv run --frozen pytest --cov --cov-report=term --cov-report=xml:.pipeline/coverage.xml \
+    uv run --frozen pytest -m "not e2e" --cov --cov-report=term --cov-report=xml:.pipeline/coverage.xml \
         --cov-report=html:.pipeline/htmlcov --junitxml=.pipeline/pytest.xml
 }
+
+stage_e2e() { uv run --frozen pytest -m e2e -p no:cacheprovider --browser chromium; }
 
 # ---------------------------------------------------------------- runner
 declare -a RESULTS=()

@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it> -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ESP32 Tiny LLM</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">◈</span>
+      <div>
+        <h1>ESP32 Tiny LLM</h1>
+        <p class="subtitle">a real transformer for one ESP32-S3 — desktop simulator</p>
+      </div>
+    </div>
+    <div class="model-picker">
+      <label for="model">Model</label>
+      <select id="model" data-testid="model-select"></select>
+    </div>
+    <ul class="chips" id="model-chips" data-testid="model-chips" aria-label="model facts"></ul>
+  </header>
+
+  <main class="layout">
+    <section class="panel device" id="device-panel" aria-labelledby="device-title">
+      <div class="panel-head">
+        <h2 id="device-title">Greenhouse</h2>
+        <span class="muted">simulated device · firmware owns every actuator</span>
+      </div>
+      <div class="sensors" id="sensors" data-testid="sensors"></div>
+      <h3>Actuators</h3>
+      <div class="actuators" id="actuators" data-testid="actuators"></div>
+      <h3>Scenarios</h3>
+      <div class="scenarios" id="scenarios"></div>
+    </section>
+
+    <section class="panel chat" aria-labelledby="chat-title">
+      <div class="panel-head">
+        <h2 id="chat-title">Conversation</h2>
+        <button class="ghost" id="clear" type="button" data-testid="clear">New conversation</button>
+      </div>
+      <ol class="transcript" id="transcript" data-testid="transcript" aria-live="polite"></ol>
+      <div class="suggestions" id="suggestions"></div>
+      <form class="composer" id="composer">
+        <input id="input" data-testid="input" autocomplete="off" maxlength="240"
+               placeholder="Ask the greenhouse…" aria-label="message">
+        <button type="submit" id="send" data-testid="send">Send</button>
+      </form>
+    </section>
+
+    <section class="panel internals" aria-labelledby="internals-title">
+      <div class="panel-head">
+        <h2 id="internals-title">Inside the transformer</h2>
+        <span class="muted">last turn · host timings</span>
+      </div>
+      <dl class="stats" id="stats" data-testid="stats"></dl>
+      <div class="profile" id="profile" data-testid="profile"></div>
+      <p class="note">Measured on this PC by the same C runtime the firmware uses. On-device speed is
+        estimated in <em>docs/01-feasibility.md</em> until a board is attached.</p>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

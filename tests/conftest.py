@@ -11,6 +11,8 @@ from training.model import ModelConfig
 from training.tokenizer import Tokenizer
 from training.train import TrainConfig, train
 
+pytest_plugins = ["tests.web_fixtures"]
+
 
 @pytest.fixture(scope="session")
 def tiny_data(tmp_path_factory: pytest.TempPathFactory) -> Path:
