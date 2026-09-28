@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
+
+[project]
+name = "esp32-tiny-llm"
+description = "A real tiny transformer language model for a single ESP32-S3: training, C runtime, firmware and web simulator."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+authors = [{ name = "Marcel Petrick", email = "mail@marcelpetrick.it" }]
+requires-python = ">=3.12"
+version = "0.0.4"
+dependencies = []
+
+[dependency-groups]
+train = [
+    "numpy==2.5.3",
+    "torch==2.14.0",
+]
+dev = [
+    "clang-format==22.1.8",
+    "clang-tidy==22.1.8",
+    "gcovr==8.6",
+    "mypy==2.3.1",
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "ruff==0.16.9",
+    "shellcheck-py==0.11.0.1",
+]
+
+[tool.uv]
+package = false
+default-groups = ["dev", "train"]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["third_party", "node_modules", ".pipeline"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "PL", "PT", "C4"]
+ignore = ["PLR0913", "PLR2004", "PLR0911", "PLR0912", "PLR0915"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+exclude = ["^third_party/", "^node_modules/", "^\\.pipeline/"]
+
+[[tool.mypy.overrides]]
+module = ["torch", "torch.*"]
+follow_imports = "silent"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "slow: longer-running tests (still part of the pipeline)",
+    "e2e: browser end-to-end tests",
+]
+
+[tool.coverage.run]
+source = ["training", "tools", "web"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+skip_covered = true
+exclude_also = ["if __name__ == .__main__.:"]

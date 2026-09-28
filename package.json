@@ -1,0 +1,10 @@
+{
+  "name": "esp32-tiny-llm-tooling",
+  "private": true,
+  "description": "Node tooling for docs checks (markdownlint, mermaid rendering) and browser e2e tests.",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "12.0.0",
+    "markdownlint-cli2": "0.23.3"
+  }
+}

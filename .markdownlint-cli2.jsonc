@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+{
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD024": { "siblings_only": true },
+    "MD033": false,
+    "MD041": false,
+    "MD060": false
+  },
+  "ignores": ["vision.md", "node_modules/**", "third_party/**", ".pipeline/**", ".venv/**"]
+}

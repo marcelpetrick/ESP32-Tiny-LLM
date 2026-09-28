@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
+#
+# Runs ./localPipeline.sh — exactly the local quality gate — on every push and PR.
+name: Local Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  local-pipeline:
+    name: Local pipeline replica
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Run local pipeline
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: ./localPipeline.sh
+
+      - name: Upload pipeline reports
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: pipeline-reports
+          path: .pipeline/
+          if-no-files-found: ignore

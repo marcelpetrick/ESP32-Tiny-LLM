@@ -49,12 +49,14 @@ gantt
 ## 2. Phase details and exit criteria
 
 ### P0 — Docs and scaffolding
+
 - `AGENTS.md`, `docs/01…07`, `README.md` with badges, `LICENSE` (GPLv3),
   `THIRD_PARTY_NOTICES.md`, SPDX headers.
 - `localPipeline.sh` + `scripts/` (documented), GitHub Actions running the same script.
 - **Exit:** pipeline green locally and on GitHub; Mermaid diagrams render.
 
 ### P1 — Training core (vision M5 foundations, §7, §9, §14, §29)
+
 - `training/world/`: greenhouse device world — state, actions, rules, diagnoses
   (the **oracle**), mirrored by the C validator.
 - `training/data/`: episode generator — single-turn, multi-turn with references,
@@ -71,6 +73,7 @@ gantt
 - **Exit:** a tiny model trains on CPU in the test suite and exports a valid file.
 
 ### P2 — C runtime FP32 (vision M2, O1)
+
 - `runtime/`: everything in [05-architecture.md](05-architecture.md) §2–§7.
 - `tinyllm-cli` REPL and `libtinyllm.so` for ctypes.
 - C unit tests (own tiny test harness, no external deps), coverage via gcovr ≥ 95 %.
@@ -80,6 +83,7 @@ gantt
 - **Exit:** "Python, desktop C … agree numerically within defined tolerance."
 
 ### P3 — llama2.c as permanent oracle (vision M1, research item 1)
+
 - Runtime supports RoPE, SwiGLU, GQA, and llama2.c's score-based tokenizer.
 - `tools/convert_llama2c.py` converts MIT-licensed `stories260K` into `.tllm`.
 - Test builds upstream `run.c` (MIT, vendored with notice in `third_party/llama2c/`) and
@@ -87,6 +91,7 @@ gantt
 - **Exit:** identical greedy continuations for the fixed prompt set.
 
 ### P4 — INT8 (vision M4, O3–O4, §11)
+
 - Per-row symmetric INT8 quantiser (Python) + calibration report.
 - C paths W8A32 and W8A8 (int32 accumulation), selectable per model.
 - Report: validation loss / action accuracy FP32 vs INT8, bytes per token.
@@ -94,6 +99,7 @@ gantt
   simulation matches C INT8 exactly on logits argmax for the fixture set.
 
 ### P5 — Real models and evaluation (vision M3, M6, M7, §19)
+
 - Train the tier-M2 domain assistant on the GPU; commit the INT8 `.tllm` (~0.8 MB) under
   `models/` with its manifest.
 - Evaluation suites: in-distribution, held-out templates, robustness (typos, synonyms,
@@ -106,11 +112,13 @@ gantt
 - **Exit:** results table in `docs/results/`; target ≥ 95 % on the in-distribution suite.
 
 ### P6 — Web simulator (usable product on any PC)
+
 - `web/`: stdlib HTTP server + static UI (dashboard, chat, action card, timings).
 - Playwright e2e tests; `scripts/screenshot.sh` produces the README screenshot.
 - **Exit:** e2e green; screenshot committed.
 
 ### P7 — Docker
+
 - Multi-stage `Dockerfile` (build runtime → slim Python runtime image), non-root user,
   healthcheck; `scripts/docker_smoke.sh`.
 - `.github/workflows/docker.yml`: build on every push, publish to
@@ -118,6 +126,7 @@ gantt
 - **Exit:** image runs, smoke test passes locally and in CI, package visible on GHCR.
 
 ### P8 — Firmware (vision M0/M2 on-device parts, §12, §13)
+
 - `firmware/`: ESP-IDF project; `components/tinyllm` wraps `runtime/` sources (no copy);
   console task + pinned inference task; model partition; `sdkconfig.defaults`.
 - Boot self-test: PSRAM size/mode, model CRC, arena placement report.
@@ -129,6 +138,7 @@ gantt
 - **Exit:** firmware builds reproducibly in CI; flashing instructions documented.
 
 ### P9 — Research branches (vision M6, M8, §24–25)
+
 - Teacher paraphrase generation via local Ollama (Apache-2.0/MIT teachers only).
 - Experiments E1–E5 from [04-distillation.md](04-distillation.md).
 - Chat-lite tier L model.
@@ -136,6 +146,7 @@ gantt
   plus estimated device speed → Pareto plot in `docs/results/`.
 
 ### P10 — Hardware bring-up (needs the board)
+
 - Flash, run self-test, fill the benchmark matrix with **measured** values.
 - Replace hot kernels with ESP-DSP/ESP-NN/PIE versions where they measurably win.
 - Dual-core policy by arithmetic intensity (research item 3); PSRAM 80 vs 120 MHz.
