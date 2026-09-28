@@ -101,12 +101,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.7.1` |
-| Updated | 2026-09-28 18:12 UTC |
-| This commit | fix(tools): place sweep chart labels without overlaps |
+| Version | `0.7.2` |
+| Updated | 2026-09-28 18:15 UTC |
+| This commit | docs: retake README screenshots at idle host timings |
 
 Recent commits:
 
+- `bdf2dcb` fix(tools): place sweep chart labels without overlaps
 - `4400df9` docs(results): add the architecture sweep and the vision status page
 - `c6d8ed9` docs(plan): record the GitHub About text and topics
 - `5867c17` fix(tools): never stash plan.md in ship.sh
@@ -114,6 +115,5 @@ Recent commits:
 - `da0f102` fix(data): include the teacher model in the paraphrase cache key
 - `39ddb45` fix(runtime): keep only well-formed replies in the conversation history
 - `0597e39` docs(results): add the M6 distillation experiment comparison
-- `61a240d` fix(tools): skip model manifests in the experiment report
 
 <!-- ship:end -->
