@@ -439,8 +439,9 @@ def _examples(spec: KeySpec, rng: random.Random) -> list[str]:
     return out
 
 
-def _ask_cached(ask: AskFn, prompt: str, seed: int, cache: Path | None) -> str:
-    digest = hashlib.sha256(f"{SYSTEM}\n{prompt}\n{seed}".encode()).hexdigest()[:16]
+def _ask_cached(ask: AskFn, prompt: str, seed: int, cache: Path | None, model: str) -> str:
+    """Ask once per (teacher model, system prompt, prompt, seed); answers are cached on disk."""
+    digest = hashlib.sha256(f"{model}\n{SYSTEM}\n{prompt}\n{seed}".encode()).hexdigest()[:16]
     cached = cache / f"{digest}.txt" if cache else None
     if cached is not None and cached.exists():
         return cached.read_text(encoding="utf-8")
@@ -452,7 +453,11 @@ def _ask_cached(ask: AskFn, prompt: str, seed: int, cache: Path | None) -> str:
 
 
 def generate(
-    ask: AskFn, per_key: int = 24, cache: Path | None = None, seeds: tuple[int, ...] = (7, 11)
+    ask: AskFn,
+    per_key: int = 24,
+    cache: Path | None = None,
+    seeds: tuple[int, ...] = (7, 11),
+    model: str = DEFAULT_MODEL,
 ) -> dict[str, Any]:
     """Ask the teacher for every key (once per seed), filter, split 80/20 into train/test."""
     result: dict[str, dict[str, list[str]]] = {}
@@ -462,7 +467,7 @@ def generate(
         raw: set[str] = set()
         for seed in seeds:
             prompt = prompt_for(spec, per_key, _examples(spec, rngs[seed]))
-            text = _ask_cached(ask, prompt, seed, cache)
+            text = _ask_cached(ask, prompt, seed, cache, model)
             cleaned = {clean(line) for line in text.splitlines() if clean(line)}
             if spec.require_number is not None:  # only numeric intents: "the other one" stays text
                 cleaned = {digits_for_number_words(line) for line in cleaned}
@@ -491,7 +496,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seeds", type=int, nargs="+", default=[7, 11])
     args = parser.parse_args(argv)
     started = time.time()
-    data = generate(ollama_ask(args.host, args.model), args.per_key, args.cache, tuple(args.seeds))
+    data = generate(
+        ollama_ask(args.host, args.model), args.per_key, args.cache, tuple(args.seeds), args.model
+    )
     data["manifest"] = {
         "teacher": args.model,
         "teacher_license": TEACHER_LICENSE,

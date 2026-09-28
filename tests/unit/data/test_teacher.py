@@ -74,6 +74,8 @@ def test_generate_with_fake_teacher(tmp_path: Path) -> None:
     n_calls = len(calls)
     tm.generate(fake, per_key=5, cache=tmp_path, seeds=(1,))  # cached: no new calls
     assert len(calls) == n_calls
+    tm.generate(fake, per_key=5, cache=tmp_path, seeds=(1,), model="another-teacher")
+    assert len(calls) == 2 * n_calls  # a different teacher never reuses cached answers
     assert "every line must contain the number 2" in tm.prompt_for(
         spec(("fan_set", "fan", "2")), 5, ["x"]
     )
