@@ -160,15 +160,23 @@ def build(
     ctx: int = 128,
     vocab_size: int = 1024,
     teacher_path: Path | None = None,
+    tokenizer_path: Path | None = None,
 ) -> dict[str, object]:
-    """Generate all splits, train the tokenizer on ``train``, write JSONL + manifest."""
+    """Generate all splits, train (or reuse) the tokenizer, write JSONL + manifest.
+
+    Reusing a tokenizer (``tokenizer_path``) keeps experiments comparable: models trained on
+    different data variants can be evaluated on identical token sequences.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     specs = default_splits(scale)
     teacher = load_teacher(teacher_path)
     if not teacher["paraphrases"]:
         specs = [spec for spec in specs if spec.name != "teacher_test"]
     samples = {spec.name: generate(spec, teacher) for spec in specs}
-    tok = train_bpe(plain_segments(samples["train"]), SPECIAL_TOKENS, vocab_size)
+    if tokenizer_path is not None:
+        tok = Tokenizer.load(tokenizer_path)
+    else:
+        tok = train_bpe(plain_segments(samples["train"]), SPECIAL_TOKENS, vocab_size)
     tok.save(out_dir / "tokenizer.json")
     train_prompts: set[str] = set()
     stats: dict[str, dict[str, int]] = {}
@@ -236,8 +244,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--teacher", type=Path, default=None, help="paraphrases.json from training.data.teacher"
     )
+    parser.add_argument("--tokenizer", type=Path, default=None, help="reuse this tokenizer.json")
     args = parser.parse_args(argv)
-    manifest = build(args.out, args.scale, args.ctx, args.vocab, args.teacher)
+    manifest = build(args.out, args.scale, args.ctx, args.vocab, args.teacher, args.tokenizer)
     print(json.dumps(manifest["splits"], indent=2))
     print(f"vocab_size={manifest['vocab_size']}")
     return 0

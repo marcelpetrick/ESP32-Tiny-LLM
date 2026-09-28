@@ -115,3 +115,13 @@ def test_build_with_teacher_adds_teacher_test_split(tmp_path: Path) -> None:
     assert manifest["teacher_sha256"]
     assert "fake" in str(manifest["teacher"])
     assert dataset.load_teacher(tmp_path / "missing.json")["paraphrases"] == {}
+
+
+def test_build_reuses_a_given_tokenizer(tmp_path: Path) -> None:
+    first = tmp_path / "a"
+    dataset.build(first, scale=0.001, vocab_size=450)
+    second = tmp_path / "b"
+    dataset.main(
+        ["--out", str(second), "--scale", "0.001", "--tokenizer", str(first / "tokenizer.json")]
+    )
+    assert (second / "tokenizer.json").read_text() == (first / "tokenizer.json").read_text()
