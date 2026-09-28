@@ -10,6 +10,7 @@ re-validated, so the dataset never teaches an action the firmware would reject.
 from __future__ import annotations
 
 import random
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 from training.data.lexicon import (
@@ -20,6 +21,7 @@ from training.data.lexicon import (
     POLITE_SUFFIX,
     split_frames,
 )
+from training.data.noise import add_typos
 from training.world import (
     DIAGNOSES,
     DeviceState,
@@ -259,10 +261,21 @@ REFERENCE_INTENTS: dict[str, float] = {
 class DialogueGenerator:
     """Deterministic (seeded) generator of :class:`Sample` objects."""
 
-    def __init__(self, seed: int, heldout: bool = False, noise: float = 0.15) -> None:
+    def __init__(
+        self,
+        seed: int,
+        heldout: bool = False,
+        noise: float = 0.15,
+        teacher: Mapping[str, Sequence[str]] | None = None,
+        p_teacher: float = 0.0,
+        typo_p: float = 0.0,
+    ) -> None:
         self.rng = random.Random(seed)
         self.heldout = heldout
         self.noise = noise
+        self.teacher = teacher or {}
+        self.p_teacher = p_teacher
+        self.typo_p = typo_p
 
     # -- helpers --------------------------------------------------------------------
     def frame(self, intent: str) -> str:
@@ -285,7 +298,18 @@ class DialogueGenerator:
             text = text + rng.choice(POLITE_SUFFIX)
         if rng.random() < self.noise / 3:
             text = rng.choice(FILLERS) + text
+        if rng.random() < self.noise and text[-1:] not in ("?", "!", "."):
+            text += rng.choice(("?", "?", "!", "."))
+        if rng.random() < self.typo_p:
+            text = add_typos(text, rng, 1)
         return text
+
+    def utter(self, intent: str, dev: str, value: str, templated: str) -> str:
+        """User text for a semantic key: a teacher paraphrase (probability p_teacher) or the template."""
+        options = self.teacher.get(f"{intent}|{dev}|{value}")
+        if options and self.rng.random() < self.p_teacher:
+            templated = self.rng.choice(options)
+        return self.decorate(templated)
 
     def sample_state(self) -> DeviceState:
         """Random plausible state, biased so every diagnosis occurs regularly."""
@@ -357,7 +381,7 @@ class DialogueGenerator:
         if reply.startswith(UNSUPPORTED):
             tags.add("safety")
         return Turn(
-            self.decorate(text),
+            self.utter(intent, dev, "" if arg is None else str(arg), text),
             reply,
             action,
             intent,
@@ -387,7 +411,9 @@ class DialogueGenerator:
         if intent == "read_dev":
             dev = rng.choice(DEVICES)
             text = self.frame(intent).format(dev=self.word(dev))
-            return Turn(self.decorate(text), device_value_text(dev, state), None, intent, dev)
+            return Turn(
+                self.utter(intent, dev, "", text), device_value_text(dev, state), None, intent, dev
+            )
         if intent in ("status", "diagnose"):
             return self.diagnose_turn(intent, state)
         if intent == "diag_dev":
@@ -396,7 +422,7 @@ class DialogueGenerator:
         if intent in _COMPLAINT_DIAGS:
             return self.complaint_turn(intent, state)
         if intent == "ack":
-            text = self.decorate(self.frame(intent))
+            text = self.utter(intent, "", "", self.frame(intent))
             if state.err:
                 return Turn(text, f"clearing fault e{state.err}.", f"ack={state.err}", intent)
             return Turn(text, "there is no active fault.", None, intent)
@@ -407,7 +433,7 @@ class DialogueGenerator:
         return self.reference_turn(intent, state, prev)
 
     def read_turn(self, intent: str, state: DeviceState, prev: Turn | None) -> Turn:
-        text = self.decorate(self.frame(intent))
+        text = self.utter(intent, "", "", self.frame(intent))
         if intent == "what_about" and (prev is None or prev.intent != "read_t"):
             intent = "read_h"
         if intent == "read_t":
@@ -427,7 +453,7 @@ class DialogueGenerator:
         return Turn(text, "the pump is off, so it draws no current.", None, intent, "pump")
 
     def diagnose_turn(self, intent: str, state: DeviceState) -> Turn:
-        text = self.decorate(self.frame(intent))
+        text = self.utter(intent, "", "", self.frame(intent))
         found = diagnose(state)
         if not found:
             if intent == "status":
@@ -442,7 +468,7 @@ class DialogueGenerator:
         return Turn(text, reply, action, intent, tags=frozenset({"diag"}))
 
     def diag_dev_turn(self, dev: str, state: DeviceState) -> Turn:
-        text = self.decorate(self.frame("diag_dev").format(dev=self.word(dev)))
+        text = self.utter("diag_dev", dev, "", self.frame("diag_dev").format(dev=self.word(dev)))
         for d in diagnose(state):
             if d.name in _DEVICE_DIAGS[dev]:
                 reply, action = diagnosis_reply(d.name, state)
@@ -456,7 +482,7 @@ class DialogueGenerator:
         )
 
     def complaint_turn(self, intent: str, state: DeviceState) -> Turn:
-        text = self.decorate(self.frame(intent))
+        text = self.utter(intent, "", "", self.frame(intent))
         found = [d.name for d in diagnose(state)]
         for name in _COMPLAINT_DIAGS[intent]:
             if name in found:
@@ -482,7 +508,13 @@ class DialogueGenerator:
                 f"{UNSUPPORTED} i cannot set a target temperature. "
                 "i can only turn the heater on or off."
             )
-            return Turn(self.decorate(text), reply, None, intent, tags=frozenset({"safety"}))
+            return Turn(
+                self.utter(intent, "", str(degrees), text),
+                reply,
+                None,
+                intent,
+                tags=frozenset({"safety"}),
+            )
         replies = {
             "greet": "hello. i look after the greenhouse.",
             "help": "i can switch the fan, heater, pump, light and window, read the sensors "
@@ -491,7 +523,9 @@ class DialogueGenerator:
             "ood": f"{UNSUPPORTED} i can only help with the greenhouse.",
         }
         tags = frozenset({"safety"}) if intent == "ood" else frozenset()
-        return Turn(self.decorate(self.frame(intent)), replies[intent], None, intent, tags=tags)
+        return Turn(
+            self.utter(intent, "", "", self.frame(intent)), replies[intent], None, intent, tags=tags
+        )
 
     def compound_turn(self, state: DeviceState) -> Turn:
         dev, dev2 = self.rng.sample(("fan", "light", "pump"), 2)
@@ -526,7 +560,7 @@ class DialogueGenerator:
                     "off": "what should i turn off?",
                 }.get(op, "which device do you mean?")
                 return Turn(
-                    self.decorate(text),
+                    self.utter(intent, "", "" if arg is None else str(arg), text),
                     f"{CLARIFY} {question}",
                     None,
                     intent,
@@ -536,7 +570,7 @@ class DialogueGenerator:
                 op = "on" if op == "on" else "off"
             reply, action = device_command(dev, op, arg, state)
             return Turn(
-                self.decorate(text),
+                self.utter(intent, "", "" if arg is None else str(arg), text),
                 reply,
                 action,
                 intent,
@@ -551,7 +585,7 @@ class DialogueGenerator:
         # and_dev / correct: need a previous switch operation
         choices = [d for d in SWITCHABLE if d != dev]
         dev2 = rng.choice(choices)
-        text = self.decorate(self.frame(intent).format(dev=self.word(dev2)))
+        text = self.utter(intent, dev2, "", self.frame(intent).format(dev=self.word(dev2)))
         if prev is None or prev.op not in ("on", "off") or dev is None:
             question = f"{CLARIFY} what should i do with the {DEVICE_LABEL[dev2]}?"
             return Turn(text, question, None, intent, tags=frozenset({"clarify", "reference"}))

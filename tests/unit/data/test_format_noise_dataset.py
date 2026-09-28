@@ -94,3 +94,24 @@ def test_main_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     code = dataset.main(["--out", str(tmp_path), "--scale", "0.001", "--vocab", "500"])
     assert code == 0
     assert "vocab_size=" in capsys.readouterr().out
+
+
+def test_build_with_teacher_adds_teacher_test_split(tmp_path: Path) -> None:
+    bank = {
+        "paraphrases": {
+            "on|fan|": {"train": ["kindly power the blower"], "test": ["blower on, thanks"]}
+        },
+        "manifest": {"teacher": "fake"},
+    }
+    teacher_file = tmp_path / "paraphrases.json"
+    teacher_file.write_text(json.dumps(bank))
+    manifest = dataset.build(
+        tmp_path / "out", scale=0.002, vocab_size=500, teacher_path=teacher_file
+    )
+    splits = manifest["splits"]
+    assert isinstance(splits, dict)
+    assert "teacher_test" in splits
+    assert splits["train"]["p_teacher"] == 0.5
+    assert manifest["teacher_sha256"]
+    assert "fake" in str(manifest["teacher"])
+    assert dataset.load_teacher(tmp_path / "missing.json")["paraphrases"] == {}

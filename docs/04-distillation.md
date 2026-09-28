@@ -56,6 +56,7 @@ generation run** and record the result in the dataset manifest.
 |---|---|---|---|
 | [Qwen2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct) | Apache-2.0 | yes | **default teacher** |
 | [Qwen2.5-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) | Apache-2.0 | yes | fast fallback / CI smoke |
+| [Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B) | Apache-2.0 | yes | **used for the committed paraphrases** (already installed locally; see §3) |
 | [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B), [Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B) | Apache-2.0 | yes | alternative |
 | [SmolLM2-1.7B-Instruct](https://huggingface.co/HuggingFaceTB/SmolLM2-1.7B-Instruct) | Apache-2.0 | yes | alternative, fully open data |
 | [Phi-4-mini-instruct](https://huggingface.co/microsoft/Phi-4-mini-instruct) | MIT | yes | alternative |
@@ -75,6 +76,16 @@ Datasets reused as-is:
 | [llama2.c tinyllamas](https://huggingface.co/karpathy/tinyllamas) checkpoints | MIT | used only as a numerical oracle / hardware sanity check (vision M1) |
 
 ## 3. Running the teacher locally
+
+**What we actually ran (2026-09-28):** `python -m training.data.teacher` against Ollama's
+`qwen3.5:4b` (Q4_K_M, Apache-2.0, thinking disabled) on the RTX A2000 — about 41 tok/s,
+2 seeds × 90 semantic keys in ≈ 16 minutes. The strict filter accepted **1531 of 2199**
+lines (70 %); rejections were lost devices/numbers, flipped meanings ("turn off" in an
+"on" request), stray numbers, non-ASCII, and anything matching a held-out frame. The
+result is committed as `data/teacher/paraphrases.json` (80 % train / 20 % test per key,
+with the teacher name, licence and prompt recorded), so builds never need the GPU.
+
+The original plan was:
 
 The dev machine has an RTX A2000 (8 GB) and [Ollama](https://ollama.com/). A 7 B model at
 4-bit runs at roughly 30–45 tok/s there [estimate], so ~20 k paraphrases × ~20 tokens

@@ -1,0 +1,2092 @@
+{
+ "manifest": {
+  "note": "labels come from the rule-based oracle; the teacher only supplies wording",
+  "per_key": 24,
+  "seconds": 0.2,
+  "seeds": [
+   7,
+   11
+  ],
+  "system_prompt": "You write training data for a tiny voice assistant that controls a greenhouse. Output only the requested lines, one per line, lowercase, no numbering, no quotes, no explanations.",
+  "teacher": "qwen3.5:4b",
+  "teacher_license": "Apache-2.0 (Qwen/Qwen3.5-4B model card)"
+ },
+ "paraphrases": {
+  "ack||": {
+   "test": [
+    "clear my error now please",
+    "clear the fault",
+    "dismiss these warnings now"
+   ],
+   "train": [
+    "acknowledge that red warning sign okay?",
+    "acknowledge the fault and let us go",
+    "acknowledge this alarm",
+    "cancel the error code",
+    "erase all errors",
+    "give me a fresh start on that error",
+    "ignore the alarm for one minute plz",
+    "quit showing faults",
+    "tell me if it fixed the alert",
+    "tell me when your alarm resets done",
+    "turn off the alert",
+    "wipe out alarms"
+   ]
+  },
+  "and_dev|fan|": {
+   "test": [
+    "add this to the fan as well",
+    "and start up the air fan please",
+    "put same action into the fan"
+   ],
+   "train": [
+    "also turn that blower on with me",
+    "and turn on the fan also",
+    "blower needs starting like the rest",
+    "do it again for the fan thanks",
+    "do that with the fan",
+    "fan should run along too",
+    "go ahead and operate the fan here",
+    "please do it on the fan also",
+    "please do that with the fan too",
+    "please engage the ventilator alongside this one too",
+    "same deal with the blower please",
+    "same thing for the fan too",
+    "turn on the ventilator now too"
+   ]
+  },
+  "and_dev|heat|": {
+   "test": [
+    "switch that warm air flow into play now also turning the radiator",
+    "turn on heater too"
+   ],
+   "train": [
+    "and heat up the heater",
+    "and the heater on",
+    "do that with heater",
+    "heater also please",
+    "on my way is it? turn on heater as well",
+    "please do not forget about heating",
+    "same thing to heater",
+    "turn it up a bit in here with the heater as well"
+   ]
+  },
+  "and_dev|light|": {
+   "test": [
+    "extend this order to include any light sources used here please",
+    "the growing lights need this treatment as well",
+    "turn the lights there into green ones too"
+   ],
+   "train": [
+    "and also turn on the grow light",
+    "do it to the light as well",
+    "do that with the grow light too",
+    "do what you did before with the grower lights",
+    "i'd like to include the grow light",
+    "include the grow lamp in it",
+    "it's my request regarding the light source",
+    "light it up like before",
+    "same thing but use the lights instead",
+    "same thing with the lights",
+    "the grow light as well please",
+    "turn on that light now"
+   ]
+  },
+  "and_dev|pump|": {
+   "test": [
+    "and turn on the water pump",
+    "please engage the irrigation system right now",
+    "please make the irrigation go on",
+    "please start the pump also"
+   ],
+   "train": [
+    "activate the sprinkler and keep going",
+    "and the pump as well",
+    "can you do the sprinkler now",
+    "could you also activate the water pump please",
+    "do it for the pump too",
+    "do the pump as well please",
+    "does the pump need doing then",
+    "go on and use the pump",
+    "i want that pump started too",
+    "just like the first one with the pump",
+    "just like you did last time for the water pump too",
+    "keep that pump running while you are doing this",
+    "make it run for the pump as well",
+    "make the pump work as well please",
+    "same routine but add on the water pump",
+    "same with the pump please",
+    "the water pump next?",
+    "turn on that pump too",
+    "turn up the irrigation system now",
+    "water pump, same thing here"
+   ]
+  },
+  "close|win|": {
+   "test": [
+    "close the roof window please",
+    "shut down that window"
+   ],
+   "train": [
+    "close the roof window",
+    "closing that window right away",
+    "drop down the vent here",
+    "lock and seal the vent",
+    "pull the rope for the window",
+    "roof window shut down there",
+    "turn off the skylight now",
+    "zip up skylight now"
+   ]
+  },
+  "complain_cold||": {
+   "test": [
+    "it's freezing inside"
+   ],
+   "train": [
+    "can't breathe this cold",
+    "cold as ice",
+    "my hands are numb with cold",
+    "really cold now",
+    "so cold today",
+    "too freezing for plants",
+    "why so cold?",
+    "why's it chilly here?"
+   ]
+  },
+  "complain_dry||": {
+   "test": [
+    "where did they go? oh no, not again! give them some water soon"
+   ],
+   "train": [
+    "it is so dry in here",
+    "plants need a drink right now",
+    "water those sad flowers please"
+   ]
+  },
+  "complain_hot||": {
+   "test": [
+    "can't you turn on something cool?",
+    "this heat is unbearable today"
+   ],
+   "train": [
+    "i need this heat turned down now",
+    "i'm feeling quite overheated today",
+    "i'm sweating buckets right now",
+    "it's getting dangerously hot inside",
+    "it's so damn hot here",
+    "my clothes are wet with sweat",
+    "please make it cooler outside here",
+    "sweating through my shirt already",
+    "the heat is getting unbearable now",
+    "this greenhouse needs some cooling fast"
+   ]
+  },
+  "complain_humid||": {
+   "test": [
+    "i hate this dampness in the room.",
+    "it feels oppressive with all that moisture.",
+    "this air just won't stop being damp today",
+    "this weather makes everything wet and gloomy"
+   ],
+   "train": [
+    "can't believe how wet and thick it gets.",
+    "i can't breathe this moist air",
+    "i swear i can taste how wet everything is.",
+    "it's feeling very muggy inside",
+    "it's getting hot and humid here again",
+    "just so sticky and warm, this is awful.",
+    "my clothes are feeling too heavy because of the humidity.",
+    "my head hurts from so much moisture",
+    "so damp it feels like summer all year round",
+    "so muggy and heavy, what's going on?",
+    "such a thick layer of moisture in here today.",
+    "the dampness makes everything feel incredibly uncomfortable.",
+    "the humidity is just killing me today.",
+    "the humidity is too high today",
+    "why does everything feel so sticky?",
+    "why does it feel so wet around me now?",
+    "why does the room feel sticky?"
+   ]
+  },
+  "correct|fan|": {
+   "test": [
+    "don't touch plants, use the fan",
+    "no sorry that was about the ventilator too",
+    "sorry, just the fan",
+    "wrong thing again need help with the fan"
+   ],
+   "train": [
+    "actually meaning ventilator here please do",
+    "don't do this one i want the fan",
+    "i mean the fan here",
+    "i need blower running now sorry",
+    "it was just a request to activate the fan",
+    "just ask for the blower now please forgive me",
+    "just give me a signal on the fan",
+    "my bad, i need the fan",
+    "no, just turn on the fan",
+    "nope, only turn on the fan",
+    "not so much heat as this fan",
+    "oops wrong target, just activate the fan",
+    "please correct me about the fan",
+    "sorry about that but it's for the fan",
+    "sorry my mind went blank but it is about the fan",
+    "sorry, actually want to fix the fan",
+    "wait for it, not aircon but the fan",
+    "wait i said the air fan",
+    "wrong device, it is the fan"
+   ]
+  },
+  "correct|heat|": {
+   "test": [
+    "actually it's about heating now",
+    "can you warm up with the heater?",
+    "the heating system needs attention actually"
+   ],
+   "train": [
+    "do not touch that, just the heater",
+    "i meant to turn on the heater",
+    "i need to warm up the heater actually",
+    "i was talking about the home heater",
+    "no no, heat from the warmer please",
+    "no, it is for the heater",
+    "no, just wanted the heater",
+    "not plants, just turn the heater on",
+    "not the plants, but the heater",
+    "oops, sorry about the heater",
+    "oops, sorry, my mistake is the heater",
+    "sorry, i meant the garden heater this time",
+    "sorry, i need the radiator turned off",
+    "the plant heater needs on now please",
+    "wait, the heater please",
+    "wrong device, activate the heater instead"
+   ]
+  },
+  "correct|light|": {
+   "test": [
+    "no, the growth light",
+    "not that but the grow light please",
+    "wait no, its all the grow light"
+   ],
+   "train": [
+    "actually it is just the light",
+    "actually just talk to the light",
+    "don't switch off the plant light",
+    "i said lights by accident",
+    "just turn up the light now",
+    "my mistake about the light",
+    "my mistake regarding the electric light",
+    "no i meant the lamp really",
+    "no, its for the grow light",
+    "sorry wrong thing, the grow light is needed",
+    "sorry, my bad with the grow light",
+    "the grow light needs to be on",
+    "turn on the garden lights instead",
+    "wait it's the grow light",
+    "yes but please use only the growth lamp"
+   ]
+  },
+  "correct|pump|": {
+   "test": [
+    "no, the sprinkler instead",
+    "not my fault but i meant the pump",
+    "oh sorry it was the irrigation system",
+    "the pump is leaking so do that"
+   ],
+   "train": [
+    "actually it's the water pump",
+    "can you check out the watering pump now?",
+    "i mean the pump",
+    "i meant to say run the sprinkler system now too actually",
+    "i need to turn on the irrigation system actually",
+    "its the pump you need to check",
+    "just go get the pump running okay",
+    "just turn on the pump please",
+    "no, i mean the pump",
+    "not that one again, focus on the pump for me",
+    "oh no sorry i forgot about the pump not there",
+    "please ignore my mistake and work the water pump instead",
+    "sorry about the pump actually",
+    "sorry its time to fix up the pump",
+    "sorry, wrong thing this time, do your usual with the pump",
+    "turn off the main and then the pump",
+    "wait its water pump",
+    "wait, sorry about the sprayer, just say pump please"
+   ]
+  },
+  "diag_dev|fan|": {
+   "test": [
+    "can you check this air fan",
+    "fan noise is crazy",
+    "fan sounds off",
+    "why does it sound bad on the fan?"
+   ],
+   "train": [
+    "can you look at the air fan?",
+    "fan isn't right at all",
+    "fan seems weired",
+    "fan sounds like it break downs",
+    "is that fan weird?",
+    "is the fan okay",
+    "my fan sounds like something wrong with it",
+    "odd noises from the fan again",
+    "please inspect why is fan noisy",
+    "seems weird on ventilator brother please fixit",
+    "something fishy going on in the fan",
+    "something odd about the ventilator",
+    "strange act of that blower system",
+    "the blower acting funny",
+    "the blower is acting strange please check",
+    "the blower makes a funny sound",
+    "what's wrong with the fan?",
+    "why did that fan sound odd",
+    "why does my air fan sound up",
+    "why does this fan make so much noise"
+   ]
+  },
+  "diag_dev|heat|": {
+   "test": [
+    "could someone look at the heating system since something seems wrong with it?",
+    "is there something wrong inside this warmer?",
+    "my heater is acting very strangely now.",
+    "the heater noises are odd today."
+   ],
+   "train": [
+    "can someone look at this strange heater problem?",
+    "can you fix this loud heating unit?",
+    "i think there's an issue with the heating now.",
+    "is there an issue with my heater?",
+    "my heater noise worries me too much to ignore",
+    "please check out my noisy warmer soon.",
+    "something wrong with how that heater runs.",
+    "something's off with my heater",
+    "sounds like a broken heating system here.",
+    "that radiator makes a terrible racket, please check it now",
+    "the heater is acting up again and sounds very odd",
+    "this heater sounds like something is broken.",
+    "this warmer makes strange sounds again.",
+    "what's going on with the heating unit?",
+    "what's up with the radiator noise?",
+    "why does my home warmer sound so different from normal operation here?",
+    "why does that heater sound weird?",
+    "why does the radiator make that noise?"
+   ]
+  },
+  "diag_dev|light|": {
+   "test": [
+    "is there an issue with these lights?",
+    "my green house lights sound all wrong now.",
+    "my grow lamp seems to be glitching",
+    "that grow light behavior is crazy",
+    "why does my grow light sound odd?",
+    "why does the grow light sound weird"
+   ],
+   "train": [
+    "can someone look at this noisy lamp?",
+    "can you check if this light broke?",
+    "can you look into why this light acts up?",
+    "check the weird noise coming from the grow light.",
+    "did something wrong happen with the light",
+    "did the light do something odd recently?",
+    "does my lamp need checking out?",
+    "does that loud grow light need attention?",
+    "does that strange light need checking?",
+    "is that light acting up again?",
+    "is there an issue with that bright light?",
+    "my grow light makes a buzzing sound.",
+    "my grow lights are sounding strange today",
+    "please inspect why the light acts weird.",
+    "something is fishy about how those lights act",
+    "something is wrong with the lamp.",
+    "something's odd about these grow lights",
+    "sounds like something isn't quite right with the lights.",
+    "that lamp makes a weird noise right now",
+    "the grow light behavior seems very off.",
+    "the lights are making a noise now.",
+    "the sound from these lights is off",
+    "those lights make strange sounds lately",
+    "what's happening with my grow light setup?",
+    "why does my lamp keep making this racket?",
+    "why is my lights acting so crazy?"
+   ]
+  },
+  "diag_dev|pump|": {
+   "test": [
+    "could you check if there's an issue with the pump?",
+    "my irrigation seems like it's going wrong",
+    "the water pump acts strange today",
+    "why does the water pump sound weird?"
+   ],
+   "train": [
+    "can you check if the water pump is broken?",
+    "does that pump make bad noise now?",
+    "does the irrigation system work fine now?",
+    "does this irrigation thing need checking right now?",
+    "have you checked why the pump makes so much sound?",
+    "is that strange sound from our pump okay?",
+    "is that water pump okay?",
+    "listen, the pump sounds quite funky today",
+    "my sprinkler pump sounds weird lately",
+    "my sprinkler system sounds all wrong and weird",
+    "something is off with how the sprinkler acts",
+    "something odd about how the water pump runs here",
+    "something wrong with how the pump makes a noise",
+    "that pump seems to be acting all wonky somehow",
+    "the pump noises are very odd to me",
+    "the water pump acts up again today",
+    "the water pump behavior feels very strange right now",
+    "what's up with this noise on the pump?",
+    "why does my irrigation make such a loud racket these days",
+    "why does my water pump sound odd?"
+   ]
+  },
+  "diag_dev|win|": {
+   "test": [
+    "sounds like something wrong with the skylight",
+    "sounds wrong from the top window",
+    "that skylight seems stuck shut or acting funny",
+    "the window above sounds all bumpy and odd"
+   ],
+   "train": [
+    "check this roof window now please",
+    "does my vent sound strange?",
+    "does this high window leak any air now?",
+    "is it weird inside the skylight?",
+    "is something blocking up there in the window area",
+    "my roof vent makes a really loud weird thud",
+    "my roof vent seems stuck or weird",
+    "my roof window makes noise",
+    "roof window acts very strangely today",
+    "roof window sounds different",
+    "something odd about that window",
+    "something strange going on with the skylight noise",
+    "that roof window seems broken why?",
+    "the roof window behavior is off",
+    "the roof window sounds too noisy",
+    "why is the roof window acting strange",
+    "why is the skylight acting up?"
+   ]
+  },
+  "diagnose||": {
+   "test": [
+    "anything malfunctioning or bad?",
+    "did sensors find problems?",
+    "find what failed here",
+    "run a system check now.",
+    "show me problems",
+    "spot trouble"
+   ],
+   "train": [
+    "am i getting sick plants",
+    "any issues",
+    "any issues with the greenhouses?",
+    "any leaks or tears",
+    "are there any errors here?",
+    "are things acting up",
+    "can you find defects",
+    "check for malfunctions please.",
+    "check if broken",
+    "did anything break lately?",
+    "did something go south",
+    "do u see any trouble?",
+    "does anything fail?",
+    "find errors now",
+    "is everything okay inside?",
+    "is something wrong?",
+    "is the system down",
+    "look at damage signs",
+    "report malfunctions",
+    "see if faulty parts exist",
+    "something faulty in sight?",
+    "spot any hardware failure pls.",
+    "spot any issues please",
+    "tell me about trouble",
+    "tell me bad news",
+    "tell me if its broken.",
+    "what broke today"
+   ]
+  },
+  "down|fan|": {
+   "test": [
+    "less speed on the air fan ok",
+    "quiet that fan bit"
+   ],
+   "train": [
+    "dampening the blower output slightly would help",
+    "dim the blower slightly",
+    "fan go quieter by any chance",
+    "fan speed lower now",
+    "make the blower not so loud at all",
+    "make the ventilator weaker please",
+    "slightly dimmer for my air fan",
+    "turn down a bit on the fan",
+    "turn down power to fan gently please",
+    "ventilator run cooler if possible dear"
+   ]
+  },
+  "down|light|": {
+   "test": [
+    "lowering the light level"
+   ],
+   "train": [
+    "cut brightness from the lights a bit",
+    "dim the lights slightly",
+    "fade out the grow room lights a little",
+    "make the lights weaker",
+    "put less power into the lamp",
+    "reduce growth light intensity",
+    "take down the light shade",
+    "turn down the grow light"
+   ]
+  },
+  "fan_set|fan|0": {
+   "test": [
+    "drop fan speed below 0 mark",
+    "set the fan at 0",
+    "shut down blower level 0",
+    "stop air circulation fan 0"
+   ],
+   "train": [
+    "0 it out with fan control",
+    "dial the fan for 0 output",
+    "freeze fan motion into 0 spot",
+    "get fan working at 0",
+    "kill power in fan slot 0",
+    "knock fan hard on 0",
+    "make blower halt at 0 degrees",
+    "make the fan stop at 0",
+    "please shut down the fan with a 0 setting",
+    "put fan away from 0",
+    "set fan to 0",
+    "shut down system fan 0 unit",
+    "stop air fan mode 0",
+    "switch ventilator gear 0 mode",
+    "switch ventilator to 0 now",
+    "turn off the fan 0"
+   ]
+  },
+  "fan_set|fan|1": {
+   "test": [
+    "could you lower our air fan just a bit to level 1?",
+    "turn fan to 1",
+    "turn off all but fan 1 mode"
+   ],
+   "train": [
+    "blower needs setting to 1 today",
+    "can you get that ventilator down to digit 1?",
+    "can you start the fan on 1?",
+    "fan at 1 now please",
+    "fan on level 1 is great",
+    "get me air fan level 1",
+    "just want my fan running low, make it 1 please",
+    "make the blower go to 1",
+    "my blower needs setting up to 1 now",
+    "please dial in the blower mode right now to setting of 1",
+    "please set fan at 1 for air flow",
+    "set my ventilator to digit 1",
+    "set up the fan at number 1 for cooling today",
+    "switch ventilator over to number 1"
+   ]
+  },
+  "fan_set|fan|2": {
+   "test": [
+    "fan now should be at 2",
+    "flip switch for level 2 on fan",
+    "get fan into position 2",
+    "move fan to position 2",
+    "set the fan to 2",
+    "switch blower up to 2",
+    "turn my fan down to 2"
+   ],
+   "train": [
+    "activate ventilator at level 2",
+    "air fan set mode 2",
+    "blower please go to digit 2",
+    "change ventilator to 2",
+    "engage the ventilator on 2",
+    "fan please level 2",
+    "get air fan running level 2",
+    "get fan working level 2 please",
+    "have air fan set to 2",
+    "make fan go to 2",
+    "make fan level 2",
+    "make sure ventilator is on level 2",
+    "move ventilator to stage 2 here",
+    "operate blower in stage 2",
+    "operating the fan with mode 2",
+    "please adjust the fan to 2",
+    "put blower at number 2",
+    "put blower into setting 2",
+    "put blower to setting 2",
+    "run the air fan at degree 2",
+    "set air flow fan at 2",
+    "set the air fan at level 2",
+    "set the fan at 2",
+    "start blower in position 2",
+    "start fan with value 2",
+    "switch the fan over to 2",
+    "turn on fan 2",
+    "turn the fan on degree 2",
+    "turn up fan to level 2 now"
+   ]
+  },
+  "fan_set|fan|3": {
+   "test": [
+    "go and turn the fan to level 3",
+    "put the fan down low, level 3 okay? i mean turn it now",
+    "set that blower up to level 3 right away",
+    "switch blower to digit 3"
+   ],
+   "train": [
+    "can you have air fan at 3?",
+    "change the ventilation fan out to number 3",
+    "fan at 3 please",
+    "fan needs setting to level 3 here",
+    "fan speed needs to be set up to 3 quicky",
+    "get my fan running on 3",
+    "i want blower going strong but only until 3 turns",
+    "i want my fan at level 3 today",
+    "make the air fan reach level 3",
+    "make the blower go level 3 now",
+    "move the ventilator over here to number 3 please",
+    "please help me get air fan moving at just 3 levels today",
+    "please make ventilator level 3",
+    "please set the air fan to 3",
+    "put this fan on 3 please",
+    "raise the fan speed on 3",
+    "set fan up to 3",
+    "set the fan at level 3",
+    "turn fan to 3",
+    "turn the ventilator up to 3"
+   ]
+  },
+  "fan_set|fan|4": {
+   "test": [
+    "fan needs setting for 4",
+    "make blower work at 4",
+    "set air fan mode to 4 now please"
+   ],
+   "train": [
+    "adjust everything so the fan is 4",
+    "could i have ventilator run on 4?",
+    "fan number 4 please",
+    "get my ventilator running at level 4",
+    "increase the air fan to 4",
+    "just press button for fan 4",
+    "make the fan go up to 4",
+    "please set fan at level 4",
+    "please set our blower up to 4",
+    "put the fan on setting 4 now",
+    "set the fan to 4",
+    "switch blower to 4 please",
+    "turn on the fan at 4",
+    "turn the fan up to 4"
+   ]
+  },
+  "fan_set|fan|5": {
+   "test": [
+    "dial in a fan speed of 5",
+    "fan on level 5",
+    "get air fan running on 5",
+    "i want my ventilator going 5",
+    "make my ventilator level 5"
+   ],
+   "train": [
+    "activate fan mode 5 immediately",
+    "adjust ventilator up to 5",
+    "can you set this fan at 5?",
+    "fan go to 5 please",
+    "fan needs setting to digit 5",
+    "i want my fan level 5",
+    "make blower work at 5",
+    "please crank that blower to 5",
+    "power the fan with 5",
+    "put the blower on 5 now",
+    "put the fan setting at 5 now",
+    "raise the blower level to 5",
+    "run air fan at 5",
+    "set everything to fan number 5 please",
+    "set fan to 5",
+    "set the fan at 5",
+    "turn down fan settings so it is 5",
+    "turn fan to 5",
+    "turn on fan level 5",
+    "ventilator degree 5 please"
+   ]
+  },
+  "fan_set|fan|7": {
+   "test": [
+    "adjust ventilator to digit 7",
+    "can you make blower go to 7?",
+    "make sure blower is setting to 7",
+    "make the blower go level 7",
+    "turn off fan then back on 7"
+   ],
+   "train": [
+    "adjust blower setting directly at number 7",
+    "can you crank fan up to 7?",
+    "change fan mode up to 7 levels",
+    "fan down to 7 please",
+    "fan please go up to level 7",
+    "fan please stop and reset to 7",
+    "fan setting needs to be 7",
+    "fan speed up to 7 now",
+    "get that blower working at 7",
+    "i want the air fan on level 7",
+    "just want the ventilator at 7 for now",
+    "make the system run with a 7 setting on fan",
+    "move ventilator switch over to 7",
+    "please crank fan up to 7",
+    "please set my fan to level 7",
+    "put air fan into position of 7",
+    "put air fan on number 7",
+    "put the ventilator dial down low to 7",
+    "set my fan at level 7 today",
+    "set the fan at level 7",
+    "set the fan to 7",
+    "turn on the fan at 7",
+    "turn on the ventilator 7"
+   ]
+  },
+  "greet||": {
+   "test": [
+    "hello greenhouse helper",
+    "hey you",
+    "how are things",
+    "morning sunshine girl",
+    "sawcha hello there",
+    "sup hello friend"
+   ],
+   "train": [
+    "come chat with me",
+    "come on in and say hi",
+    "good day",
+    "good evening sunshine",
+    "hello my lovely assistant",
+    "hello there green helper",
+    "hello there pal",
+    "here we go again",
+    "hey look at me speaking",
+    "hey there",
+    "hey you machine",
+    "hi buddy",
+    "hiya howdy hello friend",
+    "how are you doing today?",
+    "just looking around here now",
+    "just saying hello",
+    "nice morning vibes",
+    "ready for some fun?",
+    "say hi back",
+    "sup what can i do for u",
+    "there ya go good morning mate",
+    "time to greet ya",
+    "welcome to our garden space",
+    "what's up buddy",
+    "what's up today",
+    "yo green master"
+   ]
+  },
+  "help||": {
+   "test": [
+    "are we connected yet",
+    "can i have instructions?",
+    "what can you do here",
+    "who is speaking there",
+    "your capabilities please told"
+   ],
+   "train": [
+    "am i talking to a system?",
+    "am the smart manager",
+    "can i ask something simple",
+    "could you explain it",
+    "explain yourself please",
+    "help out here",
+    "help with growing plants",
+    "how about some tasks",
+    "how does that work",
+    "i need guidance now",
+    "i need help here",
+    "just say what to do",
+    "list of tasks if any",
+    "show me whats possible",
+    "show my options now",
+    "tell me about yourself",
+    "tell me your functions",
+    "what are your functions?",
+    "what can this greenhouse bot do?",
+    "what is this for?",
+    "who controls this place"
+   ]
+  },
+  "it_down||": {
+   "test": [
+    "a touch less noise would help",
+    "cut back just a little",
+    "go easy on that one",
+    "not so loud there"
+   ],
+   "train": [
+    "can you lower it slightly",
+    "could we dim the sound by a notch",
+    "could we make it softer?",
+    "dial back on volume",
+    "dimmer and dimmer on that",
+    "just turn down that thing",
+    "less from it",
+    "less intensity for this thing okay",
+    "lower it slightly for me please",
+    "lower the volume of this",
+    "make it quieter please",
+    "make that quieter please",
+    "maybe less noise out of it",
+    "put those things in hush mode",
+    "slow it down there",
+    "take it down just so much",
+    "turn that a little",
+    "turn that down a bit",
+    "whisper that down now"
+   ]
+  },
+  "it_off||": {
+   "test": [
+    "kill the electricity in it"
+   ],
+   "train": [
+    "dismantle this machine here",
+    "just kill it quick for me",
+    "put that to sleep",
+    "put that unit to sleep okay?",
+    "shut it for me",
+    "stop using it dear",
+    "turn it into standby mode please",
+    "turn that off now please"
+   ]
+  },
+  "it_on||": {
+   "test": [
+    "let's get it working",
+    "power it now"
+   ],
+   "train": [
+    "activate this beastie",
+    "can you flip this switch?",
+    "could someone flip this big button to begin operation?",
+    "get it running please",
+    "hitch a ride with it",
+    "ignite that machine here",
+    "is there a way i can activate that thingy?",
+    "kickstart it for me",
+    "make it go live",
+    "please turn over that box here",
+    "push the start button on it",
+    "turn that one on"
+   ]
+  },
+  "it_set||0": {
+   "test": [
+    "turn it all the way to 0",
+    "turn it off at 0"
+   ],
+   "train": [
+    "bring it down to 0",
+    "bring it right back to 0",
+    "get it down to 0 now",
+    "got any chance for this thing? no just 0 please",
+    "make sure that's a 0 on it",
+    "make that 0",
+    "put it at 0",
+    "put that on 0 okay?",
+    "reset everything to 0 quickly",
+    "set it to 0",
+    "switch over there to 0",
+    "you can set that to 0 if you want"
+   ]
+  },
+  "it_set||1": {
+   "test": [
+    "begin operation at stage 1",
+    "make that equal 1",
+    "switch things to number 1",
+    "turn this up to 1"
+   ],
+   "train": [
+    "activate mode number 1",
+    "bring us all the way down to 1",
+    "change over to 1",
+    "configure it for degree 1",
+    "drop down to level 1",
+    "enable setting 1 now",
+    "get control to value 1 please",
+    "go straight for 1",
+    "make that 1",
+    "please set everything to 1",
+    "put humidity at 1 percent",
+    "raise temperature by 1",
+    "set it 1",
+    "set it to 1",
+    "start counting from 1 only",
+    "start up with intensity 1"
+   ]
+  },
+  "it_set||2": {
+   "test": [
+    "bring the thermostat down to 2",
+    "configure it down to 2",
+    "just leave it up at 2",
+    "put that at 2 okay?",
+    "put that thing into mode 2",
+    "set it to 2, please"
+   ],
+   "train": [
+    "adjusting it now to 2",
+    "bring it back down to 2",
+    "change settings to 2",
+    "change up there to 2",
+    "configure that for a 2",
+    "get it up to 2",
+    "get that panel set to 2 please",
+    "give me a level 2",
+    "go ahead set that to 2",
+    "got your setting at 2 yeah",
+    "i want that turned on to 2",
+    "make sure its on 2 now",
+    "make that 2",
+    "move it over to level 2",
+    "please change it to 2",
+    "please configure it as number 2",
+    "put the thing at 2",
+    "raise it to number 2",
+    "set everything back to 2 quickly",
+    "set it to 2",
+    "set the device at 2",
+    "switch over to level 2",
+    "turn it on 2",
+    "turn over that thing to 2"
+   ]
+  },
+  "it_set||20": {
+   "test": [
+    "can you get your device onto 20 zips",
+    "make that 20",
+    "turn on to 20"
+   ],
+   "train": [
+    "adjust the dial there until we hit 20 zeroes please",
+    "can you set it to 20?",
+    "change that up to 20",
+    "configure device as 20",
+    "i need my sensor set back to 20 oohs",
+    "please adjust to 20",
+    "please configure it at 20 noughties",
+    "program it for 20 degrees",
+    "put the setting at 20",
+    "raise thermostat to 20",
+    "set it to 20",
+    "set that to 20 no zeroes",
+    "switch over to 20 please",
+    "turn your control unit off then up by 20 units"
+   ]
+  },
+  "it_set||3": {
+   "test": [
+    "give it a 3 then",
+    "have you got to 3?",
+    "please dial in 3 quickly",
+    "turn the thing to 3"
+   ],
+   "train": [
+    "bring the temp down to 3",
+    "can you have it at 3?",
+    "change over to 3",
+    "get it up to 3",
+    "go to 3",
+    "it needs setting for 3 now",
+    "just set 3 with me",
+    "let's have our little 3 here",
+    "make everything run on 3",
+    "make it 3 now",
+    "make that 3",
+    "put me in 3",
+    "put that device at 3 please",
+    "raise the level to 3",
+    "set it to 3",
+    "set that at 3",
+    "switch back to 3",
+    "turn on at 3"
+   ]
+  },
+  "it_set||40": {
+   "test": [
+    "get the system ready for 40 oh",
+    "make that go up to 40",
+    "switch over to 40 right away"
+   ],
+   "train": [
+    "adjust that level for 40 oh",
+    "change that out to make 40 oh",
+    "change things to show 40 digits",
+    "get that up to 40 quickly",
+    "just put 40 there okay?",
+    "make it 40, please",
+    "make sure it reads 40 clearly",
+    "please change it into 40 oh",
+    "program this little bit with a temp of 40 oh",
+    "put 40 onto that screen please",
+    "show 40 as is needed",
+    "switch over to setting of 40 oh",
+    "tell it to go 40 now",
+    "turn on 40 for that",
+    "turn on mode 40"
+   ]
+  },
+  "it_set||60": {
+   "test": [
+    "got anything you need 60 of those right away",
+    "just set it at 60 too",
+    "please adjust that thermostat to 60 please",
+    "set it to 60 degrees this morning",
+    "that needs to be at 60 too"
+   ],
+   "train": [
+    "60 is good enough today",
+    "adjust your thing to 60 degrees",
+    "can i get 60 please sir",
+    "can you get that thing going with 60 inside too yes?",
+    "change the setting to 60 today",
+    "get 60 out there now",
+    "i need the system running on 60 fast now here today",
+    "i want 60 here in greenhouses",
+    "i want my device on 60 as well",
+    "just put it up at 60 degrees quickie thank you",
+    "make it 60, please",
+    "make sure everything hits 60 soon enough",
+    "make that 60",
+    "please turn up to 60",
+    "put 60 in place okay?",
+    "put the temperature up to 60 now",
+    "raise those sensors to 60 okay?",
+    "set it to 60",
+    "set them all right there at 60 ok",
+    "turn on 60 for me",
+    "turn on 60 for that",
+    "turn things over so they hit 60 okay thanks a lot"
+   ]
+  },
+  "it_set||80": {
+   "test": [
+    "adjust that setting to 80",
+    "change this over to 80 now",
+    "go set it for 80 please"
+   ],
+   "train": [
+    "change it out to 80 right away",
+    "get it down to 80 quickie please",
+    "get your thing to 80 yeah okay listen here",
+    "go ahead and dial 80 there",
+    "make it 80 now, please",
+    "make it reach 80",
+    "make your settings hit 80 please folks",
+    "put 80 on that thingy okay?",
+    "raise the setting for 80",
+    "set that to 80",
+    "set that up at 80",
+    "switch over to number 80 on there",
+    "turn up the number to 80"
+   ]
+  },
+  "it_up||": {
+   "test": [
+    "bring the level over top",
+    "give it a bump",
+    "push that forward",
+    "pushing it up just some",
+    "raise the volume on that one too much"
+   ],
+   "train": [
+    "a little boost there, thanks",
+    "a tiny bit louder please, could i ask that?",
+    "can you increase it slightly?",
+    "could i get a small bump in it?",
+    "get some volume from it",
+    "go higher by a hair if possible would be great",
+    "go up just a bit there",
+    "increase the sound level on this device just some",
+    "increase the sound on this one",
+    "is there any way to amp it slightly?",
+    "it needs to be more loud",
+    "just crank that thing up more for me",
+    "make it louder please",
+    "make that go louder please",
+    "make those notes bigger",
+    "please ratchet those levels up a notch or so",
+    "ramp that up again",
+    "turn it up a bit",
+    "turn that little higher",
+    "turning it up another fraction sounds perfect actually",
+    "up with it slightly"
+   ]
+  },
+  "light_set|light|0": {
+   "test": [
+    "lights down to 0 now",
+    "shut growth lamp at digit 0",
+    "unplug and set everything to 0 for growth lights"
+   ],
+   "train": [
+    "0 out the grow light percentage",
+    "bring down light intensity to a flat 0",
+    "cut power so growth lamp reads exactly 0",
+    "dim the lights until 0 percent",
+    "drop lights all the way to 0",
+    "drop the lamp intensity all the way to 0",
+    "lights go dark at 0 percent",
+    "make green light go 0 today",
+    "make grow light equal 0 now",
+    "power away the light with 0 percent",
+    "set grow light down to 0",
+    "shut down light output right at 0 percent",
+    "turn off light at 0 percent",
+    "turn off the lights at 0"
+   ]
+  },
+  "light_set|light|10": {
+   "test": [
+    "make grow lamp only 10 percentage bright"
+   ],
+   "train": [
+    "dim the green house light to 10 percent",
+    "make lights go at 10 percent",
+    "set grow light to 10 percent",
+    "set lights at 10 per cent please",
+    "turn off most light keep it at 10 per cent"
+   ]
+  },
+  "light_set|light|100": {
+   "test": [
+    "get that grow light going into its peak of 100 percent power"
+   ],
+   "train": [
+    "make sure my plants get their lights set to 100 percent",
+    "set the growth lights at 100 percent",
+    "set the lights at 100 percent power on now for grow",
+    "turn on my grow lamp to a full 100 percentage"
+   ]
+  },
+  "light_set|light|120": {
+   "test": [
+    "set the grow light to 120 percent please"
+   ],
+   "train": [
+    "dimmer down but keep it at 120 percent for the lights",
+    "make sure your lights are running at 120 percent now",
+    "turn on the lights at 120 percent okay?"
+   ]
+  },
+  "light_set|light|150": {
+   "test": [
+    "turn the grow light up to 150 now please"
+   ],
+   "train": [
+    "ask for that green growth lamp to hit 150 right away",
+    "dim the lights at 150 and go",
+    "get my grow light running with a power level of 150",
+    "make the light reach 150 as you speak here",
+    "put the lamp at exactly 150 percent brightness"
+   ]
+  },
+  "light_set|light|20": {
+   "test": [
+    "dim lights down to 20 per cent"
+   ],
+   "train": [
+    "please turn on grow lamp at 20",
+    "set the green house light to 20 percent"
+   ]
+  },
+  "light_set|light|30": {
+   "test": [
+    "light up only 30 percent today"
+   ],
+   "train": [
+    "bring our grow light down to 30",
+    "can you lower the lights to 30?",
+    "dim my grow light at 30 percent now",
+    "set the lights to 30 percent",
+    "set your plant lamp to exactly 30",
+    "turn lights down to 30 please",
+    "turn on the grow light at 30 percent"
+   ]
+  },
+  "light_set|light|35": {
+   "test": [
+    "dim the green house light to 35 percent"
+   ],
+   "train": [
+    "put the lights down to 35 pcpent",
+    "set the grow light at 35 per cent"
+   ]
+  },
+  "light_set|light|40": {
+   "test": [
+    "dim the lights down to 40 percentage points"
+   ],
+   "train": [
+    "get those lights running at 40 percent",
+    "make lights at 40 percent",
+    "my greenhouse needs its grow light at 40 percent for sure",
+    "please put the grow light to 40 percent",
+    "set the lights at 40 percent",
+    "turn on grow light for 40 percent"
+   ]
+  },
+  "light_set|light|50": {
+   "test": [
+    "make the grow light go 50 per"
+   ],
+   "train": [
+    "can i have that light level reduced to 50?",
+    "can you make our grow lights 50",
+    "dim the lights to 50 pct now please",
+    "light to 50 pcts please thanks for helping me out today",
+    "set the grow light at 50 percent power",
+    "set the growth light at 50 percent",
+    "turn my lights down to 50 per cent now please",
+    "turn on the light bulb array at exactly 50 percent brightness only"
+   ]
+  },
+  "light_set|light|60": {
+   "test": [
+    "turn on my grow lights to 60 percent please"
+   ],
+   "train": [
+    "could you set everything in my greenhouse home away from 60 light units",
+    "get that lamp running at 60 percent power right away",
+    "grow light set for a half of 60",
+    "just want to switch these grow lights to 60 percent ok",
+    "please set this light intensity up to 60 for now",
+    "set the grow light at 60 percent now",
+    "set the growth light at 60 percent",
+    "turn lights off and back on 60"
+   ]
+  },
+  "light_set|light|70": {
+   "test": [
+    "drop down light intensity till it hits 70 per cent exactly",
+    "set grow light to 70 percent"
+   ],
+   "train": [
+    "dim lights down to 70 per cent",
+    "i want lights running at just 70 percent power now",
+    "lights need setting to 70 pct only please",
+    "make lights go 70 percent now",
+    "please set grow light at 70 pct",
+    "please set my green house lamp at 70%",
+    "set the green house light to 70 percent",
+    "turn on light with 70 percentage"
+   ]
+  },
+  "light_set|light|80": {
+   "test": [
+    "turn on my grow lights for 80 per cent"
+   ],
+   "train": [
+    "raise the level of the growth light up to 80 per cent please",
+    "set the growth light at 80 percent"
+   ]
+  },
+  "light_set|light|90": {
+   "test": [
+    "dim my lamp down to 90 percent",
+    "raise your light intensity to 90 percent"
+   ],
+   "train": [
+    "get these lights up to 90 percent power",
+    "get your system ready with lights at 90 percent",
+    "have you set that light bar to 90 percent?",
+    "set grow light to 90 percent",
+    "set the lights at 90 percent",
+    "switch my grow light over to 90 percent output",
+    "turn on my grow light for 90 percent",
+    "turn your green house lamp into 90 percent power"
+   ]
+  },
+  "max|fan|": {
+   "test": [
+    "fan speed all done",
+    "full steam from the fan",
+    "make fan spin too much",
+    "turn on the fan fully"
+   ],
+   "train": [
+    "air fan blast hard",
+    "blast of wind on the fan",
+    "blower set high now",
+    "fan crank it up big",
+    "fan go crazy fast",
+    "fan needs its power up now",
+    "full velocity ventilator",
+    "get the ventilator roaring loud",
+    "make the air fan go crazy",
+    "max out that air fan",
+    "max out ventilator please",
+    "open all vents with fan",
+    "please crank this fan maxed out",
+    "put fan in blast mode",
+    "run the air fan loud",
+    "set blower to peak",
+    "set the blower high please",
+    "turn on full fan",
+    "ventilator run wild"
+   ]
+  },
+  "max|light|": {
+   "test": [
+    "boost the grow light intensity hard",
+    "ignite light with full strength",
+    "maximize grow light now",
+    "switch every lamp to peak output"
+   ],
+   "train": [
+    "boost lighting on grow lights",
+    "crank the light all the way",
+    "dial in max brightness for light",
+    "full power for grow lights",
+    "full power for my light",
+    "light needs a boost, max it out",
+    "light settings at maximum please",
+    "lights to max now",
+    "make light go super bright",
+    "make lights as bright as they can be",
+    "put grow lights at top setting",
+    "run the lights at their limit",
+    "set everything to brightest possible light",
+    "set grow light high",
+    "set light to maximum",
+    "turn on all lights",
+    "turn up light intensity high"
+   ]
+  },
+  "off|fan|": {
+   "test": [
+    "i need the fan stopped now",
+    "i want air fresh, turn off fan",
+    "please shut down the fan for me",
+    "turning off fan is urgent here"
+   ],
+   "train": [
+    "can you switch the fan to off?",
+    "fan can you go to zero speed?",
+    "fan needs to be turned off",
+    "fan needs turning off right away",
+    "off with the fan please",
+    "please have me turn off the fan",
+    "please switch off that air fan today",
+    "shut down the blower so we cool",
+    "shut down the ventilator",
+    "stop the blower immediately okay",
+    "stop up the blower now",
+    "switch off the cooling fan",
+    "switch that ventilator off please",
+    "the fan needs an order of being stopped",
+    "turn off the fan",
+    "turn this ventilator right off",
+    "ventilator must be switched to off spot"
+   ]
+  },
+  "off|heat|": {
+   "test": [
+    "off with that heater",
+    "please turn off the radiator and stop heating"
+   ],
+   "train": [
+    "can you shut down the heater?",
+    "don't keep warming up this place switch off heater",
+    "heater off please",
+    "heating off please",
+    "it's cold enough so shut off the warmer inside",
+    "make it cooler by turning heater off",
+    "please switch heater off",
+    "switch off heating now",
+    "turn off heater",
+    "turn off the heater"
+   ]
+  },
+  "off|light|": {
+   "test": [
+    "deactivate the grow lights now",
+    "lights out please"
+   ],
+   "train": [
+    "deactivate your lights",
+    "grow light off now",
+    "light is off",
+    "make lights dark",
+    "please switch off my garden light",
+    "power down growth lights",
+    "shut off the lamp",
+    "stop using grow light",
+    "turn off grow light",
+    "turn off the growth light please"
+   ]
+  },
+  "off|pump|": {
+   "test": [
+    "deactivate the pump now",
+    "please shut down the pump",
+    "quiet the water pump down"
+   ],
+   "train": [
+    "can you cut power to sprinkler?",
+    "cut power to the pump",
+    "disable the irrigation system here",
+    "flip a switch and stop the pump",
+    "i need that pump stopped",
+    "pump needs to stop now",
+    "shut down the pump for me",
+    "switch irrigation system offline if needed",
+    "switch off the water pump",
+    "that pump keeps running too much",
+    "turn off the water pump please",
+    "turn off water pump please",
+    "water pump must go quiet i think"
+   ]
+  },
+  "on|fan|": {
+   "test": [
+    "flip the switch for that fan there",
+    "put the air fan back into its running state",
+    "start up the ventilator please sir"
+   ],
+   "train": [
+    "can we get that cooling breeze going with the fan?",
+    "can you get me the air fan?",
+    "can you switch the ventilator on?",
+    "could i have the fan turned on?",
+    "get the system humming with the fan",
+    "give a shout to start the fan",
+    "i need to get that air fan going",
+    "i want to hear from you about turning on the fan",
+    "make sure the blower is running",
+    "please start the fan up immediately",
+    "please turn on my fan today",
+    "please turn this thingie called a blower onto go mode",
+    "switch over to active for the greenhouse fan unit",
+    "turn on the fan now please",
+    "will someone turn this blower on for me?"
+   ]
+  },
+  "on|heat|": {
+   "test": [
+    "on with the radiator ok?",
+    "please make that heater go"
+   ],
+   "train": [
+    "can you have the radiator go online too?",
+    "get the heating started for me",
+    "give a command to the warmer system",
+    "heater please go on now",
+    "heater running please activate it",
+    "heating needs starting for me right now",
+    "i need to fire up my heating system",
+    "make that heater run today",
+    "please make the heater work now",
+    "start the heater okay?",
+    "turn on my heater please",
+    "turn on the heater please"
+   ]
+  },
+  "on|light|": {
+   "test": [
+    "get the grow light started",
+    "turn on the lights"
+   ],
+   "train": [
+    "activate the greenhouse lamp",
+    "flip a switch for the lights",
+    "hit go on the grower light",
+    "light it for plants now",
+    "make sure light is on",
+    "on you have got your light",
+    "start growing with these lights",
+    "switch the lights on please",
+    "switching over to lights",
+    "tap to turn on light",
+    "turn on the grow light"
+   ]
+  },
+  "on|pump|": {
+   "test": [
+    "can you activate the irrigation pump?",
+    "make sure the sprinkler is running for me",
+    "please engage the spray irrigation pump right now"
+   ],
+   "train": [
+    "can you turn up the sprinkler system starting it is time today",
+    "do not forget to flip that irrigation switch and start pumping please",
+    "flip the toggle on the main water pump",
+    "get that pump going so the flowers get wet",
+    "helping by turning around this small pump would be great thanks",
+    "i would like the water pump turned on please",
+    "make sure to switch on the pump now i have a garden",
+    "make sure your sprinkler is fully operational today",
+    "please activate my water pump thank you very much indeed",
+    "please start the watering pump now",
+    "start the irrigation pump please",
+    "start up my garden pump quickly",
+    "switch over and get that pump running for me",
+    "turn on the water pump",
+    "turn on the water pump please",
+    "turn over the switch for the garden pump"
+   ]
+  },
+  "ood||": {
+   "test": [
+    "play something upbeat for me",
+    "show me a picture of whales swimming together",
+    "what ingredients do i need for lasagna?"
+   ],
+   "train": [
+    "can you tell me where the nearest library is?",
+    "could you sing that lullaby please now?",
+    "explain how to bake sourdough bread properly",
+    "how do we fix this leaky faucet please?",
+    "how far is next friday from monday?",
+    "order a cheese pizza now please",
+    "tell a short story about pirates once",
+    "tell me about the history of ancient romes",
+    "what are some good books to read right now?",
+    "what song comes next on radio one?",
+    "what time does my flight arrive tomorrow morning?",
+    "what's my favorite color according to science?",
+    "where are we currently located today?",
+    "where does the nearest airport go right here today?",
+    "which team will win tonight's big match?",
+    "who won last soccer match against rivals again?"
+   ]
+  },
+  "open|win|": {
+   "test": [
+    "can we get that ceiling vent moving soon?",
+    "please lift up that roof window"
+   ],
+   "train": [
+    "bring up some fresh wind via the window",
+    "could you crank open the top vent please",
+    "could you swing open the top vent?",
+    "get that attic window swinging",
+    "i need air so raise that skylight now",
+    "i need that skylight opened",
+    "just pop that rooftop vent for me",
+    "lift the slat on the roof window for fresh air please",
+    "make sure air gets in through the window",
+    "open the roof window now please",
+    "open up the roof window please"
+   ]
+  },
+  "read_dev|fan|": {
+   "test": [
+    "fan working now?",
+    "is that fan system active now?",
+    "is the fan on now?",
+    "status of my ventilator please."
+   ],
+   "train": [
+    "are you turning on the fan yet?",
+    "blower status is what i need",
+    "can i check if the fan is running?",
+    "did you set the fan up",
+    "fan current setting what is it?",
+    "fan settings please tell me",
+    "how to turn on the fan",
+    "is the fan on?",
+    "on or off your blower today?",
+    "please update my ventilator info",
+    "status for my blower",
+    "tell me when the fan stops",
+    "turning on the fan for me okay?",
+    "what are you doing with the ventilator right this second?",
+    "what does the air fan do right now?",
+    "what's going with the fan?",
+    "where is the fan currently located"
+   ]
+  },
+  "read_dev|heat|": {
+   "test": [
+    "heater working right now i hope",
+    "my heater settings what are they?",
+    "radiator mode on or off"
+   ],
+   "train": [
+    "can you check if heating works",
+    "can you see which way heating goes?",
+    "did i turn on the heating?",
+    "does the warmer have power?",
+    "heater active state report to me",
+    "heater functioning correctly right now no",
+    "heater running status for me",
+    "heater switched off please check it",
+    "how's my heater doing?",
+    "is the heater on?",
+    "is the heater working?",
+    "turn heater to medium please",
+    "turn on my warmer please ask",
+    "turn up the heater please",
+    "where is my radiator now?"
+   ]
+  },
+  "read_dev|light|": {
+   "test": [
+    "am i getting power from those lights right now?",
+    "do you have the greenery lamp ready"
+   ],
+   "train": [
+    "are those lights currently running",
+    "can you tell me if the grow lamp works?",
+    "grow light working or not?",
+    "how are my plant lights working?",
+    "is the grow light turned on?",
+    "is the growth light on?",
+    "lights on for the plants today",
+    "set my grow lights to dusk",
+    "show me where the grow lights are located.",
+    "what about the lights right now?",
+    "what is going on with my garden light setup?",
+    "what time are your lights on?"
+   ]
+  },
+  "read_dev|pump|": {
+   "test": [
+    "how did you set up the water pump today?",
+    "is anyone operating our main pump today?",
+    "is there a signal from the pump?",
+    "what's going on inside the pump control unit here today.",
+    "where are we at with the pump system?"
+   ],
+   "train": [
+    "am i okay with the pump right now?",
+    "am i right about the pump status?",
+    "are you using the pump yet?",
+    "can i see the status on the water pump please.",
+    "could you turn off or on the pump?",
+    "did someone turn up the pump?",
+    "does your pump need more power?",
+    "has the sprinkler started working?",
+    "how fast is this irrigation running?",
+    "how is the pump running now?",
+    "i wonder how that pump acts now.",
+    "is my sprinkler turned off for safety reasons tonight.",
+    "is the water pump running?",
+    "is the water pump turned on?",
+    "please check if the pump works.",
+    "please tell me if your irrigation is working well.",
+    "show me where my sprinkler sits.",
+    "what state is my water pump in?",
+    "what time does the water pump start?",
+    "what's going with the water pump?",
+    "where did that pump go to work?",
+    "where is the irrigation system working hard?"
+   ]
+  },
+  "read_dev|win|": {
+   "test": [
+    "can you check on that vent for us quickly?",
+    "set the roof vent for me please how is it",
+    "what about that roof window?"
+   ],
+   "train": [
+    "can you tell if the top window opens or not",
+    "how do i check my roof window status without looking outside myself?",
+    "how's the skylight setting now?",
+    "is our skylight currently open or shut?",
+    "is that skylight open or closed exactly?",
+    "is the roof window on?",
+    "is the roof window open?",
+    "just need a quick check on that window upstairs.",
+    "please check settings on my roof window and report back to me quickly",
+    "roof window, are we good to go right now?",
+    "roof window, what position does it have right this second?",
+    "set and tell me the status of the skylight please.",
+    "set the window please and tell me if it works.",
+    "tell me how the roof window is doing at present.",
+    "what position is the skylight at right now",
+    "what's up with that roof window today exactly?"
+   ]
+  },
+  "read_h||": {
+   "test": [
+    "do you have any moisture data right here",
+    "humidify? what do they mean by this?",
+    "just tell me if its humid or not okay"
+   ],
+   "train": [
+    "can i get those numbers on humidity please",
+    "current humidity please",
+    "do i get humidity data",
+    "humid or dry today",
+    "humidity levels now",
+    "humidity please tell you",
+    "moisture reading any chance",
+    "please give damp count",
+    "show me how damp things are getting today",
+    "tell me current moisture level",
+    "tell me the humidity",
+    "what is this moisture",
+    "what's humidity here"
+   ]
+  },
+  "read_pa||": {
+   "test": [
+    "how much power for pumping water"
+   ],
+   "train": [
+    "amperage drawn by water circulation motors today maybe help us out",
+    "amps used by the watering system",
+    "can you show me amp draw here",
+    "does that thing use lots of amps",
+    "i need to know the motor amp usage on pumps",
+    "watering current levels today please"
+   ]
+  },
+  "read_soil||": {
+   "test": [
+    "how wet is ground?",
+    "is there enough water for the crops right now",
+    "soil water percentage okay friend"
+   ],
+   "train": [
+    "are we running low on wet earth",
+    "can you tell me about soil hydration",
+    "check earth hydration right now please",
+    "check the earth water status",
+    "do you know how thirsty plants are?",
+    "does ground feel wet inside?",
+    "is it time to hydrate plants today?",
+    "is it time to water again",
+    "should these plants be drinking soon",
+    "soil humidity levels okay?",
+    "tell me soil dampness please",
+    "what's going on with soil water here?",
+    "what's the status of ground moisture"
+   ]
+  },
+  "read_t||": {
+   "test": [
+    "give a read on air temp",
+    "how cold does it feel today?",
+    "what degree is it right now?"
+   ],
+   "train": [
+    "could you tell how hot it is?",
+    "give me current temps here.",
+    "how hot is it inside?",
+    "i need to know temps here",
+    "is it cold or warm outside?",
+    "is there any wind making it cold?",
+    "just tell me whats warmest right now",
+    "please list out degrees outside here",
+    "tell me current temp",
+    "tell my current greenhouse temperature",
+    "tell my temperature right now.",
+    "what's going on with temps today?",
+    "what's the temp outside?",
+    "what's the temperature?"
+   ]
+  },
+  "set_temp||18": {
+   "test": [
+    "bring it all the way to exactly 18 degrees okay",
+    "set greenhouse to 18 degrees",
+    "turn up heat to 18 degrees"
+   ],
+   "train": [
+    "adjust weather control for 18",
+    "cool down to 18 degrees now",
+    "cool down to 18 degrees please",
+    "drop the temperature to 18",
+    "get air to 18 degrees now",
+    "keep everything at 18 degrees",
+    "make it 18 degrees",
+    "make sure temp is 18 degrees",
+    "make temp 18 degrees inside",
+    "please set thermostat to 18",
+    "raise it to 18 degrees quickly",
+    "raise the heat to 18 points",
+    "set the temp at 18 degrees"
+   ]
+  },
+  "set_temp||20": {
+   "test": [
+    "bring it down to 20 degrees",
+    "set temp to 20 degrees",
+    "we need the heat at 20"
+   ],
+   "train": [
+    "ask system what about setting 20 degrees",
+    "bring temp up to 20 now",
+    "can you put this place at 20?",
+    "get warmth at exactly 20",
+    "go ahead and set to 20",
+    "increase heat until 20 reaches",
+    "just make it 20 degrees ok",
+    "make greenhouse 20 degrees hot",
+    "please adjust climate to 20",
+    "raise temp to 20 degrees",
+    "raise temperature up to 20",
+    "set everything for a cool 20",
+    "turn on 20 degree setting",
+    "warm the room till it is 20"
+   ]
+  },
+  "set_temp||22": {
+   "test": [
+    "drop heat level to just 22",
+    "put climate control there nice and low at only 22",
+    "raise your heat setting up to exactly 22 degrees today",
+    "set the temp at 22 degrees"
+   ],
+   "train": [
+    "adjust to 22 degrees",
+    "aim for that perfect point, like 22 degrees",
+    "can you put our temp on 22 please friend",
+    "cool down to exactly 22 degrees",
+    "drop it down so its at 22 ok",
+    "get the greenhouse warm at 22",
+    "got your green house warmed to 22 degrees today",
+    "lock in a steady 22 degrees here",
+    "make it 22 degrees",
+    "make room temp 22 now please",
+    "please adjust the thermostat to 22",
+    "put the greenhouse at 22 degrees",
+    "raise heat up to exactly 22",
+    "raise temperature up to 22 degrees",
+    "set greenhouse temperature to 22 degrees",
+    "switch thermostat to readout of 22",
+    "turn dial until you read the numbers on 22 please ok",
+    "warm the place till we hit number 22 soon enough",
+    "warm up everything until we hit 22"
+   ]
+  },
+  "set_temp||24": {
+   "test": [
+    "adjust climate control now too 24",
+    "bring temps in all around it's set at 24"
+   ],
+   "train": [
+    "adjust climate control until we reach degree level of 24",
+    "cool down to 24 today",
+    "give the room a warm hug of 24",
+    "heat up to 24 degrees",
+    "make it 24 degrees",
+    "put greenhouse on 24",
+    "raise heat level till 24",
+    "set temp at 24 degrees",
+    "set temp to 24 degrees here please",
+    "turn thermostat off for 24"
+   ]
+  },
+  "set_temp||25": {
+   "test": [
+    "lower everything to 25",
+    "make the inside air 25 degrees",
+    "put the heat at 25",
+    "raise it up to 25 degrees please",
+    "set greenhouse temp to 25 degrees"
+   ],
+   "train": [
+    "adjust thermostat for 25 degrees",
+    "adjust thermostat to exactly 25 degrees",
+    "bring temp up to 25",
+    "cool down to a nice 25 degrees",
+    "cool it to 25 degrees please",
+    "get our greenhouse to a perfect 25",
+    "get us down to 25",
+    "go set temperature to 25",
+    "keep warmth steady for 25 degrees",
+    "lower the heat to just 25",
+    "make temp 25 degrees",
+    "please bring temperature down to exactly 25",
+    "please set temperature at 25 degrees",
+    "put the temp dial on 25",
+    "raise air to 25 degs",
+    "set greenhouse to 25 degrees",
+    "switch the climate control to 25 now",
+    "turn on 25 degree mode",
+    "turn on heat for 25 degrees",
+    "want temp inside at 25",
+    "warm things up until we hit 25"
+   ]
+  },
+  "set_temp||28": {
+   "test": [
+    "adjust climate control to 28",
+    "please set thermostat at 28",
+    "raise temps please right this way to 28",
+    "set greenhouse temp to 28 degrees",
+    "set it up so we hit 28"
+   ],
+   "train": [
+    "adjust climate control for 28 degrees",
+    "bring temps up to 28",
+    "can you get the heat to 28",
+    "change thermostat display to show 28",
+    "configure room for a 28 degree state",
+    "cool or warm it to 28?",
+    "diminish cooling until we hit 28",
+    "heat everything inside till 28 is reached",
+    "increase warmth till we reach 28",
+    "lower temp now down here at 28",
+    "make room temp 28 now please",
+    "make sure air is nice and warm at 28",
+    "make the temperature exactly 28",
+    "please set the green house at 28",
+    "put our temperature setting on 28",
+    "raise temps to 28 here",
+    "set greenhouse temperature to 28 degrees",
+    "turn on heat for 28 degrees",
+    "warm up this area so it hits 28",
+    "we need our plants at 28 degrees"
+   ]
+  },
+  "set_temp||30": {
+   "test": [
+    "get temperature right to 30 please",
+    "put thermostat on 30",
+    "set greenhouse temp to 30 degrees"
+   ],
+   "train": [
+    "can you bump the temp up to 30?",
+    "get that 30 degree feel",
+    "just need that heat level going for 30",
+    "lower temps at 30",
+    "make the rooms cool down to 30",
+    "please adjust thermostat so we hit 30",
+    "please set thermostat at 30",
+    "raise temp into 30",
+    "raise temps up to 30 now",
+    "set temp to 30",
+    "tune the heat to 30",
+    "turn on heat for 30 degrees",
+    "warm up to 30 oh",
+    "what about setting it to exactly 30 degrees?"
+   ]
+  },
+  "status||": {
+   "test": [
+    "get a rundown on all these plants for me",
+    "please show me overview of green house area",
+    "what's happening back at the farm now",
+    "what's happening inside here today?"
+   ],
+   "train": [
+    "any updates or alerts running now",
+    "anything weird going on in structure",
+    "can you list status from top to bottom",
+    "check if systems are working right now",
+    "everything green how you doing exactly",
+    "full status report needed on the crops here now",
+    "give me an overview of this place",
+    "give me full report on green house",
+    "give me snapshot of whole setup today",
+    "how are things looking inside this greenhouse currently",
+    "how's it all going inside here",
+    "is every plant and sensor okay",
+    "overview please from start to end right away",
+    "show me dashboard for all sensors",
+    "show me what is alive out there today",
+    "status check on my whole garden",
+    "tell me about every thing growing up there",
+    "tell me current state of farm",
+    "what's the big picture here inside"
+   ]
+  },
+  "thanks||": {
+   "test": [
+    "so helpful as always",
+    "thank you",
+    "that was amazing indeed",
+    "very helpful thank you so much"
+   ],
+   "train": [
+    "awesome assistence",
+    "cool control thanks",
+    "did something fantastic",
+    "great job",
+    "great job helping me",
+    "i really appreciate it",
+    "just what i needed",
+    "nice work there",
+    "perfect timing there",
+    "so nice doing that for us",
+    "thank god for this",
+    "thank you very much",
+    "thanks",
+    "thanks so much!",
+    "thats very kind of you to help here",
+    "thousand times over",
+    "truly a lifesaver now",
+    "wow thats good",
+    "you did a thing for me",
+    "you saved my day"
+   ]
+  },
+  "up|fan|": {
+   "test": [
+    "boost the ventilator strength by just so much",
+    "give more juice to the blower okay dear"
+   ],
+   "train": [
+    "can you crank the air fan speed higher?",
+    "crank up your ventilator",
+    "fan speed up",
+    "increase airflow through the fan a little bit",
+    "make the fan stronger",
+    "push the fan to go faster for me okay",
+    "raise the fan level",
+    "ramp it up slightly on that fan yeah",
+    "spin that blower faster",
+    "turn up the fan power a bit please",
+    "turn up those blades on the fan quickly"
+   ]
+  },
+  "up|light|": {
+   "test": [
+    "boost and raise the grower light",
+    "brighten my greenhouse grow light",
+    "increase the height for the lamp",
+    "make our green house lamp go high"
+   ],
+   "train": [
+    "brighten this room by raising lights",
+    "get that light intensity going higher",
+    "increase how much light shines",
+    "lift the grow lights now",
+    "lift up those grow lights now",
+    "make the light go higher",
+    "make the light stronger",
+    "make this light glow more bright",
+    "move the grow light above me more",
+    "please turn up the grow light",
+    "power on the grow lights bright",
+    "put my grow light higher up",
+    "shout to make the lamp bigger",
+    "turn on the big lamp brighter",
+    "turn the grow light stronger",
+    "turn up power to the light source"
+   ]
+  },
+  "what_about||": {
+   "test": [
+    "and the humidity"
+   ],
+   "train": [
+    "how humid is it outside now?",
+    "what's up with the humidity"
+   ]
+  }
+ },
+ "stats": {
+  "accepted": 1531,
+  "asked": 2199,
+  "rejected": 668
+ }
+}
