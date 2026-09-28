@@ -137,6 +137,7 @@ void test_console(void) {
     CHECK_CONTAINS(out, " ok\n[action] fan=2 -> ok\n");
     CHECK_CONTAINS(out, "\"text\":\"ok\",\"fallback\":null,\"action\":\"fan=2\",\"verdict\":\"ok\"");
     CHECK_CONTAINS(out, "fan=2 heat=0");
+    CHECK_EQ_INT(f->con.hist[f->con.hist_len - 1u], ACT_CLOSE); /* complete action kept, <eos> not */
     CHECK_EQ_INT(f->con.state.fan, 2);
     CHECK_EQ_INT(f->con.n_turns, 1);
 
@@ -170,6 +171,7 @@ void test_console(void) {
     const int32_t junk_script[] = {B('a'), A_CLOSE, B('z'), B('z'), EOS};
     out = scripted(f, "junk", junk_script, 5);
     CHECK_EQ_INT(json_int(tllm_console_last_json(&f->con), "gen_tokens"), 3);
+    CHECK_EQ_INT(f->con.hist[f->con.hist_len - 1u], A_CLOSE); /* the stray token is not remembered */
 
     /* an overlong action block is cut off */
     int32_t long_act[40];
@@ -179,6 +181,7 @@ void test_console(void) {
     run(f, "/max-tokens 60");
     out = scripted(f, "long action", long_act, 40);
     CHECK_EQ_INT(json_int(tllm_console_last_json(&f->con), "gen_tokens"), 26); /* </A>, <ACT> + 23 more, then cut */
+    CHECK_EQ_INT(f->con.hist[f->con.hist_len - 1u], A_CLOSE);                  /* unfinished action dropped */
 
     /* reply without </A> hits max tokens; history still gets a closing tag */
     run(f, "/max-tokens 3");

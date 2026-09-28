@@ -197,6 +197,7 @@ static int build_prompt(tllm_console *con, const char *user, uint32_t *n_prompt,
     int32_t tail[TLLM_MAX_CTX];
     uint32_t n_tail = 0;
     int len = tllm_device_render(&con->state, state_text, sizeof state_text);
+    if (len < 7) return -1; /* "<S>" + "</S>" at least */
     /* inner text between "<S>" and "</S>" */
     memcpy(body, state_text + 3, (size_t)len - 7u);
     body[len - 7] = '\0';
@@ -238,12 +239,27 @@ static int build_prompt(tllm_console *con, const char *user, uint32_t *n_prompt,
 }
 
 static void remember_exchange(tllm_console *con, uint32_t user_start, uint32_t n_prompt) {
-    /* exchange = prompt[user_start .. n_prompt) (i.e. "<U> ..</U><A>") + generated tokens w/o <eos> */
-    uint32_t n_gen = con->n_gen;
-    while (n_gen > 0u && con->gen[n_gen - 1u] == con->eos) --n_gen;
-    int has_close = 0;
-    for (uint32_t i = 0; i < n_gen; ++i)
-        if (con->gen[i] == con->a_close) has_close = 1;
+    /* exchange = prompt[user_start .. n_prompt) (i.e. "<U> ..</U><A>") + the well-formed part of
+     * the reply: up to </A>, plus a complete <ACT> .. </ACT> block if one follows. Anything else
+     * (stray tokens after </A>, a cut-off action, <eos>) never enters the history. */
+    uint32_t n_gen = con->n_gen, close_at = con->n_gen;
+    for (uint32_t i = 0; i < con->n_gen; ++i)
+        if (con->gen[i] == con->a_close) {
+            close_at = i;
+            break;
+        }
+    int has_close = close_at < con->n_gen;
+    if (has_close) {
+        n_gen = close_at + 1u;
+        if (n_gen < con->n_gen && con->gen[n_gen] == con->act_open)
+            for (uint32_t i = n_gen + 1u; i < con->n_gen; ++i)
+                if (con->gen[i] == con->act_close) {
+                    n_gen = i + 1u;
+                    break;
+                }
+    } else {
+        while (n_gen > 0u && con->gen[n_gen - 1u] == con->eos) --n_gen;
+    }
     uint32_t need = (n_prompt - user_start) + n_gen + (has_close ? 0u : 1u);
     if (need > TLLM_MAX_CTX) return;
     while ((con->hist_len + need > TLLM_MAX_CTX || con->n_turns == TLLM_CONSOLE_MAX_TURNS) && con->n_turns > 0u) {

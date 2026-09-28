@@ -160,7 +160,9 @@ size_t tllm_hot_arena_size(const tllm_model *model);
 size_t tllm_cold_arena_size(const tllm_model *model, int kv_int8);
 
 /* Bind a context to a model and arenas (16-byte aligned recommended). Builds the
- * tokenizer hash table in the hot arena. */
+ * tokenizer lookup tables in the hot arena and attaches them to the model, so the model
+ * borrows this context's arena: use one context per model, keep the arena alive while the
+ * model is used, and re-initialise (which rebinds the tables) before using another. */
 tllm_status tllm_ctx_init(tllm_ctx *ctx, tllm_model *model, const tllm_ctx_options *opt, void *hot, size_t hot_size,
                           void *cold, size_t cold_size);
 
