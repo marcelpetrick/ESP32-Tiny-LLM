@@ -8,5 +8,5 @@
     "MD041": false,
     "MD060": false
   },
-  "ignores": ["vision.md", "node_modules/**", "third_party/**", ".pipeline/**", ".venv/**"]
+  "ignores": ["vision.md", "node_modules/**", "third_party/**", "**/third_party/**", ".pipeline/**", ".venv/**"]
 }

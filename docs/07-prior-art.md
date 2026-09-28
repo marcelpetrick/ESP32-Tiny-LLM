@@ -14,7 +14,7 @@ their code.
 
 | Project | What it showed | Licence | How we use it |
 |---|---|---|---|
-| [karpathy/llama2.c](https://github.com/karpathy/llama2.c) | minimal Llama-2 training + single-file C inference | MIT | **numerical oracle**: vendored `run.c` in tests, format converter for its checkpoints (P3) |
+| [karpathy/llama2.c](https://github.com/karpathy/llama2.c) | minimal Llama-2 training + single-file C inference | MIT | **numerical oracle**: vendored `run.c` (unmodified) is built by the tests and must produce the same greedy stories as our runtime; its tokenizer algorithm is re-implemented (attributed) so our runtime loads llama2.c checkpoints |
 | [karpathy/tinyllamas](https://huggingface.co/karpathy/tinyllamas) | `stories260K` / `stories15M` checkpoints | MIT | hardware sanity model (vision M1) |
 | [DaveBben/esp32-llm](https://github.com/DaveBben/esp32-llm) | llama2.c on ESP32-S3, 260 K params, 19.13 tok/s with ESP-DSP + dual core | none stated | cited for results and ideas only; no code reused |
 | [doryiii/esp32-llm](https://github.com/doryiii/esp32-llm) | INT8 PIE path, 3.3 M params ≈ 12 tok/s, "bandwidth limit 13.1 tok/s", single core | none stated | cited; source of our 43 MB/s bandwidth estimate |

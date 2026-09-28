@@ -22,6 +22,6 @@ if [[ ${#c_files[@]} -gt 0 ]]; then
     uv run --frozen clang-format -i "${c_files[@]}"
 fi
 mapfile -t md_files < <(git ls-files --cached --others --exclude-standard '*.md' |
-    grep -v -E '^(vision\.md|node_modules/|third_party/)' || true)
+    grep -v -E '^vision\.md$|(^|/)(node_modules|third_party)/' || true)
 npx --no-install markdownlint-cli2 --fix "${md_files[@]}" >/dev/null || true
 log "automatic fixes applied"

@@ -18,7 +18,7 @@ for required in README.md AGENTS.md LICENSE THIRD_PARTY_NOTICES.md vision.md doc
 done
 
 mapfile -t md_files < <(git ls-files --cached --others --exclude-standard '*.md' |
-    grep -v -E '^(node_modules|third_party)/')
+    grep -v -E '(^|/)(node_modules|third_party)/')
 npx --no-install markdownlint-cli2 "${md_files[@]}"
 uv run --frozen python -m tools.check_links "${md_files[@]}"
 "${REPO_ROOT}/scripts/render_mermaid.sh"
