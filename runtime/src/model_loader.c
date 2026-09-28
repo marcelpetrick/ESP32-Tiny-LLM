@@ -41,9 +41,15 @@ const char *tllm_status_str(tllm_status status) {
     return "unknown";
 }
 
-static tllm_status parse_tokenizer(tllm_tokenizer *tok, const uint8_t *p, size_t size) {
-    if (size < 16u || memcmp(p, "TTOK", 4) != 0) return TLLM_ERR_TOKENIZER;
-    if (rd32(p + 4) != 1u) return TLLM_ERR_TOKENIZER;
+static int32_t find_special(const tllm_tokenizer *tok, const char *name) {
+    size_t len = strlen(name);
+    for (uint32_t i = 0; i < tok->n_special; ++i)
+        if (tok->special_len[i] == len && memcmp(tok->special[i], name, len) == 0) return (int32_t)i;
+    return -1;
+}
+
+/* Version 1: ranked BPE merges (training/tokenizer/bpe.py). */
+static tllm_status parse_bpe(tllm_tokenizer *tok, const uint8_t *p, size_t size) {
     tok->n_special = rd32(p + 8);
     tok->n_merges = rd32(p + 12);
     if (tok->n_special == 0u || tok->n_special > TLLM_MAX_SPECIAL) return TLLM_ERR_TOKENIZER;
@@ -65,10 +71,46 @@ static tllm_status parse_tokenizer(tllm_tokenizer *tok, const uint8_t *p, size_t
         uint32_t new_id = tok->n_special + 256u + r;
         if (a >= new_id || b >= new_id || a < tok->n_special || b < tok->n_special) return TLLM_ERR_TOKENIZER;
     }
-    tok->hash_keys = NULL;
-    tok->hash_ranks = NULL;
-    tok->hash_mask = 0;
+    tok->kind = TLLM_TOK_BPE;
+    tok->bos_id = find_special(tok, "<bos>");
+    tok->eos_id = find_special(tok, "<eos>");
     return TLLM_OK;
+}
+
+/* Version 2: llama2.c scored pieces (training/tokenizer/llama2c.py). */
+static tllm_status parse_scored(tllm_tokenizer *tok, const uint8_t *p, size_t size) {
+    if (size < 20u) return TLLM_ERR_TOKENIZER;
+    tok->n_special = rd32(p + 8);
+    tok->vocab_size = rd32(p + 12);
+    tok->max_piece_len = rd32(p + 16);
+    if (tok->n_special > TLLM_MAX_SPECIAL || tok->n_special > tok->vocab_size || tok->vocab_size == 0u ||
+        tok->vocab_size > 65535u || tok->max_piece_len == 0u || tok->max_piece_len > TLLM_MAX_PIECE)
+        return TLLM_ERR_TOKENIZER;
+    size_t pos = 20u;
+    for (uint32_t i = 0; i < tok->vocab_size; ++i) {
+        if (pos + 6u > size) return TLLM_ERR_TOKENIZER;
+        uint32_t len = (uint32_t)p[pos + 4u] | ((uint32_t)p[pos + 5u] << 8);
+        if (len > tok->max_piece_len || pos + 6u + len > size) return TLLM_ERR_TOKENIZER;
+        if (i < tok->n_special) {
+            tok->special[i] = (const char *)(p + pos + 6u);
+            tok->special_len[i] = (uint8_t)len;
+        }
+        pos += 6u + len;
+    }
+    tok->records = p + 20u;
+    tok->kind = TLLM_TOK_SCORED;
+    tok->bos_id = tok->n_special > 1u ? 1 : -1; /* llama2.c: 0 <unk>, 1 <s>, 2 </s> */
+    tok->eos_id = tok->n_special > 2u ? 2 : -1;
+    return TLLM_OK;
+}
+
+static tllm_status parse_tokenizer(tllm_tokenizer *tok, const uint8_t *p, size_t size) {
+    memset(tok, 0, sizeof *tok);
+    if (size < 16u || memcmp(p, "TTOK", 4) != 0) return TLLM_ERR_TOKENIZER;
+    uint32_t version = rd32(p + 4);
+    if (version == 1u) return parse_bpe(tok, p, size);
+    if (version == 2u) return parse_scored(tok, p, size);
+    return TLLM_ERR_TOKENIZER;
 }
 
 typedef struct {

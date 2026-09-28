@@ -26,11 +26,10 @@ static uint32_t kv_dim(const tllm_config *c) { return c->n_kv_heads * (c->d_mode
 
 static uint32_t max_u32(uint32_t a, uint32_t b) { return a > b ? a : b; }
 
-/* Lay out the hot arena; returns the tokenizer hash-table storage via keys/ranks. */
-static void layout_hot(tllm_ctx *ctx, const tllm_model *m, bump *b, uint32_t **keys, uint16_t **ranks) {
+/* Lay out the hot arena; returns the tokenizer workspace. */
+static void *layout_hot(tllm_ctx *ctx, const tllm_model *m, bump *b) {
     const tllm_config *c = &m->cfg;
     const uint32_t kvd = kv_dim(c);
-    const uint32_t entries = tllm_tokenizer_table_entries(&m->tok);
     tllm_ctx scratch;
     tllm_ctx *t = ctx != NULL ? ctx : &scratch;
     t->x = take(b, sizeof(float) * c->d_model);
@@ -46,8 +45,7 @@ static void layout_hot(tllm_ctx *ctx, const tllm_model *m, bump *b, uint32_t **k
     t->qx = take(b, max_u32(c->d_model, c->d_ff));
     t->tokens = take(b, sizeof(int32_t) * c->ctx_len);
     t->checksums = take(b, sizeof(double) * (c->n_layers + 1u));
-    *keys = take(b, sizeof(uint32_t) * entries);
-    *ranks = take(b, sizeof(uint16_t) * entries);
+    return take(b, tllm_tokenizer_workspace_size(&m->tok));
 }
 
 static void layout_cold(tllm_ctx *ctx, const tllm_model *m, int kv_int8, bump *b) {
@@ -72,9 +70,7 @@ static void layout_cold(tllm_ctx *ctx, const tllm_model *m, int kv_int8, bump *b
 
 size_t tllm_hot_arena_size(const tllm_model *m) {
     bump b = {NULL, 0};
-    uint32_t *keys;
-    uint16_t *ranks;
-    layout_hot(NULL, m, &b, &keys, &ranks);
+    (void)layout_hot(NULL, m, &b);
     return b.used + 16u;
 }
 
@@ -95,10 +91,7 @@ tllm_status tllm_ctx_init(tllm_ctx *ctx, tllm_model *m, const tllm_ctx_options *
     ctx->model = m;
     if (opt != NULL) ctx->opt = *opt;
     bump h = {align16(hot), 0};
-    uint32_t *keys;
-    uint16_t *ranks;
-    layout_hot(ctx, m, &h, &keys, &ranks);
-    tllm_tokenizer_build(&m->tok, keys, ranks, tllm_tokenizer_table_entries(&m->tok));
+    tllm_tokenizer_attach(&m->tok, layout_hot(ctx, m, &h));
     bump c = {align16(cold), 0};
     layout_cold(ctx, m, kv_int8, &c);
     tllm_ctx_reset(ctx);

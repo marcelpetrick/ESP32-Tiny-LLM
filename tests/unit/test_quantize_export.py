@@ -81,6 +81,7 @@ def test_write_read_round_trip(
     parsed = export.read_tllm(path)
     assert parsed.cfg == model.cfg
     assert parsed.model_id == b"\x01" * 16
+    assert isinstance(parsed.tokenizer, Tokenizer)
     assert parsed.tokenizer.merges == tok.merges
     tensors = manifest["tensors"]
     assert isinstance(tensors, list)

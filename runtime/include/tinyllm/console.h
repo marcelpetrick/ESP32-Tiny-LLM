@@ -7,6 +7,8 @@
  * starting with '/' are commands. Every response ends with one machine-readable line
  * "@@{json}" for the serial runner and the web server.
  *
+ * "/generate TEXT" continues TEXT like llama2.c's run.c (story mode).
+ *
  * Prompt layout mirrors training/data/textformat.py:
  *   <bos>[<U> user</U><A> reply</A>[<ACT> body</ACT>]]*<S> state</S><U> user</U><A>
  */
@@ -37,6 +39,7 @@ typedef struct {
     uint32_t max_tokens;
     int profile;
     int execute; /* apply approved actions to the (simulated) device state */
+    int chat;    /* model has the chat control tokens; otherwise plain lines run /generate */
     tllm_write_fn write;
     tllm_memory_fn memory;
     void *user;
@@ -55,7 +58,8 @@ typedef struct {
     int32_t bos, eos, s_open, s_close, u_open, u_close, a_open, a_close, act_open, act_close, clarify, unsupported;
 } tllm_console;
 
-/* Returns TLLM_OK, or TLLM_ERR_TOKENIZER if the model lacks the chat special tokens. */
+/* Returns TLLM_OK, or TLLM_ERR_TOKENIZER if the model has no BOS/EOS tokens. Models
+ * without the chat control tokens (e.g. llama2.c stories) run in story mode. */
 tllm_status tllm_console_init(tllm_console *con, tllm_ctx *ctx, tllm_write_fn write, void *user);
 
 /* Handle one input line (without the trailing newline). */

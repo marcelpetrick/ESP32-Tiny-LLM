@@ -28,7 +28,8 @@ def describe(path: Path) -> str:
         f"d_ff {cfg.d_ff}, mlp {cfg.mlp_type}, pos {cfg.pos_type}",
         f"vocab/ctx   {cfg.vocab_size} / {cfg.ctx_len}",
         f"params      {cfg.param_count()}",
-        f"tokenizer   {len(model.tokenizer.specials)} specials, {len(model.tokenizer.merges)} merges",
+        f"tokenizer   {type(model.tokenizer).__name__}, {len(model.tokenizer.specials)} specials, "
+        f"vocab {model.tokenizer.vocab_size}",
         "tensors:",
     ]
     for name, array in model.tensors.items():

@@ -14,9 +14,12 @@ static void put32(uint8_t *p, uint32_t v) {
     for (int i = 0; i < 4; ++i) p[i] = (uint8_t)(v >> (8 * i));
 }
 
+static int g_scored;
+
 /* Apply `edit` to a fresh blob and return the load status. */
 static tllm_status load_edited(void (*edit)(test_blob *), int fix_crc) {
     test_model_spec spec = test_default_spec();
+    spec.scored = g_scored;
     test_blob b = test_build_model(&spec);
     edit(&b);
     if (fix_crc) test_fix_crc(&b);
@@ -61,6 +64,12 @@ static void e_norm_ndim(test_blob *b) {
     /* entry 2 is l0.attn_norm (tok_emb, pos_emb, l0.attn_norm): claim it is 2-D */
     put32(b->data + b->tensor_table_offset + 2 * 68 + 36, 2);
 }
+
+static void e_v2_vocab(test_blob *b) { put32(b->data + b->tokenizer_offset + 12, 0); }
+static void e_v2_maxlen(test_blob *b) { put32(b->data + b->tokenizer_offset + 16, TLLM_MAX_PIECE + 1u); }
+static void e_v2_specials(test_blob *b) { put32(b->data + b->tokenizer_offset + 8, TLLM_MAX_SPECIAL + 1u); }
+static void e_v2_piece_len(test_blob *b) { b->data[b->tokenizer_offset + 20 + 4] = 60; } /* > max_piece_len 6 */
+static void e_v2_truncated(test_blob *b) { put32(b->data + b->tokenizer_offset + 12, 60000); }
 
 void test_loader(void) {
     test_model_spec spec = test_default_spec();
@@ -113,6 +122,14 @@ void test_loader(void) {
     CHECK_EQ_INT(load_edited(e_tensor_align, 1), TLLM_ERR_TENSOR);
     CHECK_EQ_INT(load_edited(e_tensor_ndim, 1), TLLM_ERR_TENSOR);
     CHECK_EQ_INT(load_edited(e_norm_ndim, 1), TLLM_ERR_TENSOR);
+
+    g_scored = 1;
+    CHECK_EQ_INT(load_edited(e_v2_vocab, 1), TLLM_ERR_TOKENIZER);
+    CHECK_EQ_INT(load_edited(e_v2_maxlen, 1), TLLM_ERR_TOKENIZER);
+    CHECK_EQ_INT(load_edited(e_v2_specials, 1), TLLM_ERR_TOKENIZER);
+    CHECK_EQ_INT(load_edited(e_v2_piece_len, 1), TLLM_ERR_TOKENIZER);
+    CHECK_EQ_INT(load_edited(e_v2_truncated, 1), TLLM_ERR_TOKENIZER);
+    g_scored = 0;
 
     for (int s = 0; s <= TLLM_ERR_CONTEXT_FULL; ++s) CHECK(tllm_status_str((tllm_status)s)[0] != '\0');
     CHECK_STR(tllm_status_str((tllm_status)99), "unknown");

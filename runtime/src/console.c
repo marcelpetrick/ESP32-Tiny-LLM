@@ -148,16 +148,21 @@ tllm_status tllm_console_init(tllm_console *con, tllm_ctx *ctx, tllm_write_fn wr
     tllm_rng_seed(&con->rng, con->seed);
     tllm_device_default(&con->state);
     const tllm_tokenizer *t = &ctx->model->tok;
+    con->bos = t->bos_id;
+    con->eos = t->eos_id;
+    if (con->bos < 0 || con->eos < 0) return TLLM_ERR_TOKENIZER;
     struct {
         int32_t *id;
         const char *name;
-    } specials[] = {{&con->bos, "<bos>"},        {&con->eos, "<eos>"},         {&con->s_open, "<S>"},
-                    {&con->s_close, "</S>"},     {&con->u_open, "<U>"},        {&con->u_close, "</U>"},
-                    {&con->a_open, "<A>"},       {&con->a_close, "</A>"},      {&con->act_open, "<ACT>"},
-                    {&con->act_close, "</ACT>"}, {&con->clarify, "<clarify>"}, {&con->unsupported, "<unsupported>"}};
+    } specials[] = {{&con->s_open, "<S>"},        {&con->s_close, "</S>"},
+                    {&con->u_open, "<U>"},        {&con->u_close, "</U>"},
+                    {&con->a_open, "<A>"},        {&con->a_close, "</A>"},
+                    {&con->act_open, "<ACT>"},    {&con->act_close, "</ACT>"},
+                    {&con->clarify, "<clarify>"}, {&con->unsupported, "<unsupported>"}};
+    con->chat = 1;
     for (size_t i = 0; i < sizeof specials / sizeof specials[0]; ++i) {
         *specials[i].id = tllm_special_id(t, specials[i].name);
-        if (*specials[i].id < 0) return TLLM_ERR_TOKENIZER;
+        if (*specials[i].id < 0) con->chat = 0;
     }
     return TLLM_OK;
 }
@@ -413,6 +418,87 @@ static void chat(tllm_console *con, const char *line, int stream, const char *ev
         json_close(&j);
 }
 
+/* ------------------------------------------------------------------ story mode */
+typedef struct {
+    char *buf;
+    size_t cap, len;
+    int stream;
+} text_sink;
+
+/* Emit one token's bytes with llama2.c's rule: a leading space right after BOS is dropped. */
+static void emit_token(tllm_console *con, text_sink *sink, int32_t prev, int32_t tok) {
+    char piece[TLLM_MAX_PIECE + 1];
+    int n = tllm_token_bytes(&con->ctx->model->tok, tok, piece, (int)sizeof piece);
+    if (n <= 0) return;
+    const char *p = piece;
+    if (prev == con->bos && p[0] == ' ') {
+        ++p;
+        --n;
+    }
+    if (sink->stream && con->write != NULL && n > 0) con->write(con->user, p, (size_t)n);
+    size_t room = sink->cap - sink->len - 1u;
+    size_t take_n = (size_t)n < room ? (size_t)n : room;
+    memcpy(sink->buf + sink->len, p, take_n);
+    sink->len += take_n;
+    sink->buf[sink->len] = '\0';
+}
+
+/* Continue `prompt` (llama2.c run.c semantics): fresh context, BOS + prompt, then sample. */
+static void story(tllm_console *con, const char *prompt, int stream, const char *event, int emit) {
+    tllm_ctx *ctx = con->ctx;
+    const tllm_tokenizer *t = &ctx->model->tok;
+    const uint32_t cap = ctx->model->cfg.ctx_len < TLLM_MAX_CTX ? ctx->model->cfg.ctx_len : TLLM_MAX_CTX;
+    char text[TLLM_CONSOLE_LINE_MAX + 2], story_text[1024] = {0};
+    if (t->kind == TLLM_TOK_BPE && prompt[0] != '\0')
+        seg(prompt, text, sizeof text);
+    else
+        (void)snprintf(text, sizeof text, "%s", prompt);
+    uint32_t n = 0;
+    con->prompt[n++] = con->bos;
+    int got = tllm_tokenize(t, text, strlen(text), con->prompt + 1, (int)cap - 1);
+    if (got < 0) {
+        emit_error(con, "input too long for the context window");
+        return;
+    }
+    n += (uint32_t)got;
+    if (ctx->profiling) tllm_profile_reset(ctx);
+    tllm_ctx_reset(ctx);
+    text_sink sink = {story_text, sizeof story_text, 0, stream};
+    story_text[0] = '\0';
+    for (uint32_t i = 1; i < n; ++i) emit_token(con, &sink, con->prompt[i - 1], con->prompt[i]);
+    const float *logits = NULL;
+    uint64_t t0 = clock_us(con);
+    (void)tllm_prefill(ctx, con->prompt, n, &logits);
+    uint64_t prefill_us = clock_us(con) - t0, first_us = 0;
+    uint64_t decode_start = clock_us(con);
+    int32_t prev = con->prompt[n - 1u];
+    con->n_gen = 0;
+    while (con->n_gen < con->max_tokens) {
+        int32_t tok =
+            tllm_sample(ctx->logits, ctx->model->cfg.vocab_size, &con->sampler, &con->rng, con->gen, con->n_gen);
+        if (con->n_gen == 0u) first_us = prefill_us + (clock_us(con) - decode_start);
+        if (tok == con->eos || tok == con->bos) break;
+        con->gen[con->n_gen++] = tok;
+        emit_token(con, &sink, prev, tok);
+        prev = tok;
+        if (tllm_forward(ctx, tok, &logits) != TLLM_OK) break; /* context full */
+    }
+    uint64_t decode_us = clock_us(con) - decode_start;
+    if (stream) out(con, "\n");
+    jbuf j = json_begin(con, event);
+    jkey_str(&j, "text", story_text);
+    double decode_s = (double)decode_us / 1e6;
+    jfmt(&j, ",\"prompt_tokens\":%u,\"reused_tokens\":0,\"gen_tokens\":%u", n, con->n_gen);
+    jfmt(&j, ",\"prefill_ms\":%.3f,\"first_token_ms\":%.3f,\"decode_ms\":%.3f,\"decode_tok_s\":%.2f",
+         (double)prefill_us / 1e3, (double)first_us / 1e3, (double)decode_us / 1e3,
+         decode_s > 0.0 ? (double)con->n_gen / decode_s : 0.0);
+    if (emit)
+        json_end(con, &j);
+    else
+        json_close(&j);
+    tllm_ctx_reset(ctx);
+}
+
 /* ------------------------------------------------------------------ commands */
 static void cmd_model_info(tllm_console *con) {
     const tllm_model *m = con->ctx->model;
@@ -512,7 +598,10 @@ static void cmd_benchmark(tllm_console *con, const char *arg) {
     con->ctx->profiling = 1;
     con->hist_len = con->n_turns = 0;
     tllm_ctx_reset(con->ctx);
-    chat(con, prompt, 0, "benchmark", 0);
+    if (con->chat)
+        chat(con, prompt, 0, "benchmark", 0);
+    else
+        story(con, prompt, 0, "benchmark", 0);
     /* token latency statistics (decode tokens only) */
     uint32_t n = con->n_gen > 1u ? con->n_gen - 1u : 0u;
     uint32_t lat[TLLM_MAX_CTX];
@@ -547,7 +636,8 @@ static void cmd_benchmark(tllm_console *con, const char *arg) {
 static void cmd_help(tllm_console *con) {
     out(con, "commands: /help /model-info /memory /profile on|off /kv-reset /reset /seed N /temp X /topk N\n"
              "          /max-tokens N /state /set key=value... /execute on|off /checksums /benchmark <case>\n"
-             "anything else is a chat message.\n");
+             "          /generate TEXT (continue a text, llama2.c style)\n");
+    out(con, con->chat ? "anything else is a chat message.\n" : "anything else is a story prompt.\n");
     ok(con, "help");
 }
 
@@ -642,6 +732,8 @@ static void command(tllm_console *con, const char *line) {
         }
     } else if (strcmp(cmd, "/checksums") == 0) {
         cmd_checksums(con);
+    } else if (strcmp(cmd, "/generate") == 0) {
+        story(con, arg, 1, "generate", 1);
     } else if (strcmp(cmd, "/benchmark") == 0) {
         cmd_benchmark(con, arg);
     } else {
@@ -653,6 +745,8 @@ void tllm_console_line(tllm_console *con, const char *line) {
     while (*line == ' ' || *line == '\t') ++line;
     if (*line == '/')
         command(con, line);
-    else
+    else if (con->chat)
         chat(con, line, 1, "reply", 1);
+    else
+        story(con, line, 1, "generate", 1);
 }

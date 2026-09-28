@@ -67,15 +67,29 @@ typedef struct {
     tllm_tensor attn_norm, wq, wk, wv, wo, mlp_norm, w1, w2, w3;
 } tllm_layer;
 
-/* Byte-level BPE tokenizer (mirrors training/tokenizer/bpe.py). */
+#define TLLM_MAX_PIECE 64u
+
+typedef enum {
+    TLLM_TOK_BPE = 1,   /* byte-level BPE with ranked merges (training/tokenizer/bpe.py) */
+    TLLM_TOK_SCORED = 2 /* llama2.c-style scored pieces (training/tokenizer/llama2c.py) */
+} tllm_tokenizer_kind;
+
 typedef struct {
-    uint32_t n_special, n_merges, vocab_size;
+    uint32_t kind, n_special, n_merges, vocab_size;
+    int32_t bos_id, eos_id;
     const char *special[TLLM_MAX_SPECIAL];
     uint8_t special_len[TLLM_MAX_SPECIAL];
+    /* BPE */
     const uint8_t *merges; /* n_merges pairs of little-endian u16 (a, b) */
-    uint32_t *hash_keys;   /* open-addressing pair -> rank table, lives in the hot arena */
+    uint32_t *hash_keys;   /* open-addressing pair -> rank table (workspace) */
     uint16_t *hash_ranks;
     uint32_t hash_mask;
+    /* scored pieces */
+    const uint8_t *records; /* per token: f32 score, u16 length, bytes */
+    uint32_t max_piece_len;
+    uint32_t *piece_off; /* workspace: record offset per token */
+    uint16_t *sorted;    /* workspace: token ids sorted by piece bytes */
+    uint8_t attached;    /* workspace built */
 } tllm_tokenizer;
 
 typedef struct {
@@ -160,20 +174,21 @@ tllm_status tllm_prefill(tllm_ctx *ctx, const int32_t *tokens, uint32_t n, const
 void tllm_profile_reset(tllm_ctx *ctx);
 
 /* ---------------------------------------------------------------- tokenizer */
-/* Pair->rank hash table: entries needed, and building it into caller memory
- * (done by tllm_ctx_init; exposed for tools and tests). */
-uint32_t tllm_tokenizer_table_entries(const tllm_tokenizer *tok);
-void tllm_tokenizer_build(tllm_tokenizer *tok, uint32_t *keys, uint16_t *ranks, uint32_t entries);
+/* Lookup tables live in caller memory (4-byte aligned): the merge hash table for BPE,
+ * piece offsets + sorted index for scored tokenizers. tllm_ctx_init() does this. */
+size_t tllm_tokenizer_workspace_size(const tllm_tokenizer *tok);
+void tllm_tokenizer_attach(tllm_tokenizer *tok, void *workspace);
 
-/* Encode plain text (special-token strings are NOT recognised). Returns the number of
- * tokens written, or -1 if max_out is too small. */
+/* Encode plain text (special-token strings are NOT recognised). Scored tokenizers add
+ * llama2.c's dummy-prefix space. Returns the number of tokens written, or -1 if max_out is
+ * too small or the tokenizer has no workspace. */
 int tllm_tokenize(const tllm_tokenizer *tok, const char *text, size_t len, int32_t *out, int max_out);
 
 /* Id of a special token such as "<U>", or -1. */
 int32_t tllm_special_id(const tllm_tokenizer *tok, const char *name);
 
-/* Write the bytes of one token (not NUL-terminated). Returns the byte count, or -1 if
- * the id is invalid or max_out is too small. */
+/* Write the bytes of one token (not NUL-terminated; "<0xHH>" pieces become the byte).
+ * Returns the byte count, or -1 if the id is invalid or max_out is too small. */
 int tllm_token_bytes(const tllm_tokenizer *tok, int32_t id, char *out, int max_out);
 
 /* ---------------------------------------------------------------- sampler */

@@ -37,13 +37,15 @@ void test_tokenizer(void) {
     test_blob b = test_build_model(&spec);
     tllm_model m;
     CHECK_EQ_INT(tllm_model_load(&m, b.data, b.size), TLLM_OK);
-    uint32_t entries = tllm_tokenizer_table_entries(&m.tok);
-    CHECK_EQ_INT(entries, 16);
-    uint32_t *keys = malloc(sizeof(uint32_t) * entries);
-    uint16_t *ranks = malloc(sizeof(uint16_t) * entries);
+    size_t ws_size = tllm_tokenizer_workspace_size(&m.tok);
+    CHECK_EQ_INT(ws_size, 16 * 6); /* 16 hash entries: u32 key + u16 rank */
+    void *ws = malloc(ws_size);
     int32_t ids[64];
-    CHECK_EQ_INT(encode(&m.tok, "x", ids, 64), -1); /* table not built yet */
-    tllm_tokenizer_build(&m.tok, keys, ranks, entries);
+    CHECK_EQ_INT(encode(&m.tok, "x", ids, 64), -1); /* no workspace yet */
+    tllm_tokenizer_attach(&m.tok, ws);
+    CHECK_EQ_INT(m.tok.kind, TLLM_TOK_BPE);
+    CHECK_EQ_INT(m.tok.bos_id, 1);
+    CHECK_EQ_INT(m.tok.eos_id, 2);
 
     /* merges: th, the, " t", fa, fan, an, " the", "fan=" */
     CHECK_EQ_INT(encode(&m.tok, "the", ids, 64), 1);
@@ -91,12 +93,47 @@ void test_tokenizer(void) {
     CHECK_EQ_INT(tllm_token_bytes(&m.tok, M(6), buf, 1), -1);
     CHECK_EQ_INT(tllm_token_bytes(&m.tok, -1, buf, 16), -1);
     CHECK_EQ_INT(tllm_token_bytes(&m.tok, 100000, buf, 16), -1);
-    free(keys);
-    free(ranks);
+    free(ws);
     test_free_blob(&b);
 
     /* a larger merge table gets a larger hash table */
     tllm_tokenizer big = m.tok;
     big.n_merges = 100;
-    CHECK_EQ_INT(tllm_tokenizer_table_entries(&big), 256);
+    CHECK_EQ_INT(tllm_tokenizer_workspace_size(&big), 256 * 6);
+
+    /* llama2.c-style scored pieces */
+    spec.scored = 1;
+    b = test_build_model(&spec);
+    CHECK_EQ_INT(tllm_model_load(&m, b.data, b.size), TLLM_OK);
+    CHECK_EQ_INT(m.tok.kind, TLLM_TOK_SCORED);
+    CHECK_EQ_INT(m.tok.bos_id, 1);
+    CHECK_EQ_INT(m.tok.eos_id, 2);
+    CHECK_EQ_INT(tllm_token_bytes(&m.tok, 263, buf, 16), -1); /* no workspace yet */
+    ws = malloc(tllm_tokenizer_workspace_size(&m.tok));
+    tllm_tokenizer_attach(&m.tok, ws);
+    CHECK_EQ_INT(encode(&m.tok, "ab c", ids, 64), 3); /* " " a b " " c -> " ab" " " c */
+    CHECK_EQ_INT(ids[0], 264);
+    CHECK_EQ_INT(ids[1], 259);
+    CHECK_EQ_INT(ids[2], 262);
+    CHECK_EQ_INT(encode(&m.tok, "abc", ids, 64), 2); /* "abc" (4) beats " ab" (3) */
+    CHECK_EQ_INT(ids[1], 265);
+    CHECK_EQ_INT(encode(&m.tok, "\xc3\xa9", ids, 64), 2); /* multi-byte codepoint piece */
+    CHECK_EQ_INT(ids[1], 266);
+    CHECK_EQ_INT(encode(&m.tok, "x\xff", ids, 64), 3); /* byte fallback: byte + 3 */
+    CHECK_EQ_INT(ids[1], 'x' + 3);
+    CHECK_EQ_INT(ids[2], 0xFF + 3);
+    CHECK_EQ_INT(encode(&m.tok, "", ids, 64), 0);
+    CHECK_EQ_INT(encode(&m.tok, "abc", ids, 1), -1);
+    CHECK_EQ_INT(encode(&m.tok, "abc", ids, 0), -1);
+    CHECK_EQ_INT(encode(&m.tok, "x\xff", ids, 2), -1);
+    CHECK_EQ_INT(tllm_token_bytes(&m.tok, 3 + 0x41, buf, 16), 1); /* "<0x41>" -> 'A' */
+    CHECK_EQ_INT(buf[0], 'A');
+    CHECK_EQ_INT(tllm_token_bytes(&m.tok, 3 + 0x0A, buf, 16), 1); /* lowercase hex */
+    CHECK_EQ_INT(buf[0], '\n');
+    CHECK_EQ_INT(tllm_token_bytes(&m.tok, 3, buf, 0), -1);
+    CHECK_EQ_INT(tllm_token_bytes(&m.tok, 265, buf, 16), 3);
+    CHECK_EQ_INT(tllm_token_bytes(&m.tok, 265, buf, 2), -1);
+    CHECK_EQ_INT(tllm_token_bytes(&m.tok, 1, buf, 16), 5); /* "\n<s>\n" */
+    free(ws);
+    test_free_blob(&b);
 }

@@ -54,13 +54,16 @@ void test_host(void) {
     empty.size = 0;
     path = test_write_temp(&empty, "tinyllm_host_empty.tllm");
     CHECK(tllm_host_open(path, 0, 0, NULL, 0) == NULL);
-    /* no chat specials */
+    /* no chat specials: opens in story mode */
     test_free_blob(&b);
     spec.omit_chat_specials = 1;
     b = test_build_model(&spec);
     path = test_write_temp(&b, "tinyllm_host_nochat.tllm");
-    CHECK(tllm_host_open(path, 0, 0, err, sizeof err) == NULL);
-    CHECK_STR(err, "malformed tokenizer");
+    h = tllm_host_open(path, 0, 0, err, sizeof err);
+    CHECK(h != NULL);
+    CHECK_CONTAINS(tllm_host_submit(h, "/max-tokens 3"), "ok");
+    CHECK_CONTAINS(tllm_host_submit(h, "the"), "\"event\":\"generate\"");
+    tllm_host_close(h);
     test_free_blob(&b);
 
     /* device parity helper */

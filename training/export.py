@@ -26,6 +26,16 @@ import torch
 from training.model import ModelConfig, TinyLM
 from training.quantize import quantize_rows
 from training.tokenizer import Tokenizer
+from training.tokenizer.llama2c import ScoredTokenizer
+
+AnyTokenizer = Tokenizer | ScoredTokenizer
+
+
+def tokenizer_from_blob(blob: bytes) -> AnyTokenizer:
+    """Parse an embedded tokenizer block of either version (1 = BPE, 2 = scored)."""
+    version = struct.unpack_from("<I", blob, 4)[0] if len(blob) >= 8 else 0
+    return ScoredTokenizer.from_blob(blob) if version == 2 else Tokenizer.from_blob(blob)
+
 
 MAGIC = b"TLLM"
 FORMAT_VERSION = 1
@@ -84,7 +94,7 @@ def write_tllm(
     path: Path,
     cfg: ModelConfig,
     arrays: dict[str, np.ndarray],
-    tokenizer: Tokenizer,
+    tokenizer: AnyTokenizer,
     dtype: str = "f32",
     model_id: bytes = bytes(16),
 ) -> dict[str, object]:
@@ -193,7 +203,7 @@ class TllmFile:
 
     cfg: ModelConfig
     weight_dtype: str
-    tokenizer: Tokenizer
+    tokenizer: AnyTokenizer
     tensors: dict[str, np.ndarray]
     model_id: bytes
     crc32: int
@@ -236,7 +246,7 @@ def read_tllm(path: Path) -> TllmFile:
         norm_eps=float(str(np.float32(eps))),  # shortest repr survives the f32 round trip
         rope_theta=float(theta),
     )
-    tokenizer = Tokenizer.from_blob(data[tok_off : tok_off + tok_size])
+    tokenizer = tokenizer_from_blob(data[tok_off : tok_off + tok_size])
     tensors: dict[str, np.ndarray] = {}
     for k in range(count):
         name_raw, tdtype, ndim, *rest = _ENTRY.unpack_from(data, table_off + k * _ENTRY.size)

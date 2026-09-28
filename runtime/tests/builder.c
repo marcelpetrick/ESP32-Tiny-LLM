@@ -88,7 +88,7 @@ test_blob test_build_model(const test_model_spec *s) {
     test_blob out;
     memset(&out, 0, sizeof out);
     g_rng = s->seed ? s->seed : 1u;
-    const uint32_t n_special = s->omit_chat_specials ? 3u : TEST_N_SPECIAL;
+    const uint32_t n_special = (s->omit_chat_specials || s->scored) ? 3u : TEST_N_SPECIAL;
     const uint32_t S = n_special;
     const uint32_t merges[8][2] = {{S + 't', S + 'h'}, {S + 256, S + 'e'}, {S + ' ', S + 't'}, {S + 'f', S + 'a'},
                                    {S + 259, S + 'n'}, {S + 'a', S + 'n'}, {S + ' ', S + 257}, {S + 260, S + '='}};
@@ -146,18 +146,44 @@ test_blob test_build_model(const test_model_spec *s) {
     /* tokenizer */
     size_t tok_off = g.len;
     put(&g, "TTOK", 4);
-    put32(&g, 1);
-    put32(&g, n_special);
-    put32(&g, n_merges);
-    for (uint32_t i = 0; i < n_special; ++i) {
-        uint8_t len = (uint8_t)strlen(SPECIALS[i]);
-        put(&g, &len, 1);
-        put(&g, SPECIALS[i], len);
-    }
-    for (uint32_t r = 0; r < n_merges; ++r) {
-        uint8_t b[4] = {(uint8_t)merges[r][0], (uint8_t)(merges[r][0] >> 8), (uint8_t)merges[r][1],
-                        (uint8_t)(merges[r][1] >> 8)};
-        put(&g, b, 4);
+    if (s->scored) {
+        /* llama2.c layout: <unk> <s> </s>, 256 byte pieces, then 8 scored pieces */
+        static const char *const pieces[8] = {" ", "a", "b", "c", "ab", " ab", "abc", "\xc3\xa9"};
+        static const float scores[8] = {0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 3.0f, 4.0f, 0.0f};
+        const char *names[3] = {"<unk>", "\n<s>\n", "\n</s>\n"};
+        put32(&g, 2);
+        put32(&g, 3);
+        put32(&g, vocab);
+        put32(&g, 6);
+        for (uint32_t i = 0; i < vocab; ++i) {
+            char text[16];
+            const char *p = text;
+            if (i < 3u)
+                p = names[i];
+            else if (i < 259u)
+                (void)snprintf(text, sizeof text, i - 3u == 0x0Au ? "<0x%02x>" : "<0x%02X>", i - 3u);
+            else
+                p = pieces[i - 259u];
+            uint16_t len = (uint16_t)strlen(p);
+            putf(&g, i >= 259u ? scores[i - 259u] : 0.0f);
+            uint8_t lb[2] = {(uint8_t)len, (uint8_t)(len >> 8)};
+            put(&g, lb, 2);
+            put(&g, p, len);
+        }
+    } else {
+        put32(&g, 1);
+        put32(&g, n_special);
+        put32(&g, n_merges);
+        for (uint32_t i = 0; i < n_special; ++i) {
+            uint8_t len = (uint8_t)strlen(SPECIALS[i]);
+            put(&g, &len, 1);
+            put(&g, SPECIALS[i], len);
+        }
+        for (uint32_t r = 0; r < n_merges; ++r) {
+            uint8_t b[4] = {(uint8_t)merges[r][0], (uint8_t)(merges[r][0] >> 8), (uint8_t)merges[r][1],
+                            (uint8_t)(merges[r][1] >> 8)};
+            put(&g, b, 4);
+        }
     }
     while (g.len % 4u) put(&g, NULL, 1);
     size_t tok_size = g.len - tok_off;

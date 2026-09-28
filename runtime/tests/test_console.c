@@ -233,9 +233,28 @@ void test_console(void) {
     CHECK_EQ_INT(f->con.n_turns, TLLM_CONSOLE_MAX_TURNS);
     teardown(f);
 
-    /* models without chat tokens cannot drive the console */
+    /* story mode (/generate) on a chat model: scripted end of text, then context exhaustion */
+    setup(f, 128);
+    const int32_t story_end[] = {B('!'), EOS};
+    out = scripted(f, "/generate the fan", story_end, 2);
+    CHECK_CONTAINS(out, "\"event\":\"generate\",\"text\":\"the fan!\"");
+    CHECK_EQ_INT(json_int(tllm_console_last_json(&f->con), "gen_tokens"), 1);
+    run(f, "/max-tokens 500");
+    int32_t endless[130];
+    for (int i = 0; i < 130; ++i) endless[i] = B('a');
+    scripted(f, "/generate", endless, 130);
+    CHECK_EQ_INT(json_int(tllm_console_last_json(&f->con), "gen_tokens"), 128); /* stopped by the context */
+    char toolong[TLLM_CONSOLE_LINE_MAX];
+    memset(toolong, 'q', sizeof toolong - 1u);
+    memcpy(toolong, "/generate ", 10);
+    toolong[sizeof toolong - 1u] = '\0';
+    run(f, "/max-tokens 5");
+    CHECK_CONTAINS(run(f, toolong), "input too long"); /* 246 unmerged letters > 128 tokens */
+    teardown(f);
+
+    /* models without chat tokens run in story mode (llama2.c-style scored tokenizer) */
     test_model_spec spec = test_default_spec();
-    spec.omit_chat_specials = 1;
+    spec.scored = 1;
     test_blob b = test_build_model(&spec);
     tllm_model m;
     CHECK_EQ_INT(tllm_model_load(&m, b.data, b.size), TLLM_OK);
@@ -243,6 +262,22 @@ void test_console(void) {
     void *hot = malloc(hs), *cold = malloc(cs);
     tllm_ctx ctx;
     CHECK_EQ_INT(tllm_ctx_init(&ctx, &m, NULL, hot, hs, cold, cs), TLLM_OK);
+    f->out_len = 0;
+    CHECK_EQ_INT(tllm_console_init(&f->con, &ctx, capture, f), TLLM_OK);
+    CHECK_EQ_INT(f->con.chat, 0);
+    run(f, "/max-tokens 5");
+    out = run(f, "ab c");
+    CHECK(strncmp(out, "ab c", 4) == 0); /* prompt echo, leading space dropped after BOS */
+    CHECK_CONTAINS(out, "\"event\":\"generate\",\"text\":\"ab c");
+    CHECK(json_int(tllm_console_last_json(&f->con), "gen_tokens") <= 5);
+    CHECK_CONTAINS(run(f, "/help"), "story prompt");
+    CHECK_CONTAINS(run(f, "/benchmark chat"), "\"event\":\"benchmark\"");
+    char bytes[TLLM_CONSOLE_LINE_MAX];
+    memset(bytes, 'x', sizeof bytes - 1u); /* 255 byte-fallback tokens > ctx 64 */
+    bytes[sizeof bytes - 1u] = '\0';
+    CHECK_CONTAINS(run(f, bytes), "input too long");
+    /* no BOS/EOS: the console refuses the model */
+    m.tok.bos_id = -1;
     CHECK_EQ_INT(tllm_console_init(&f->con, &ctx, NULL, NULL), TLLM_ERR_TOKENIZER);
     CHECK_EQ_INT(tllm_console_init(NULL, &ctx, NULL, NULL), TLLM_ERR_ARG);
     free(hot);
