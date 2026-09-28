@@ -65,6 +65,13 @@ def load_library() -> ctypes.CDLL:
         ctypes.c_int,
         ctypes.POINTER(ctypes.c_float),
     ]
+    lib.tllm_host_generate.argtypes = [
+        ctypes.c_void_p,
+        c_int32_p,
+        ctypes.c_int,
+        ctypes.c_int,
+        c_int32_p,
+    ]
     lib.tllm_host_alloc_count.restype = ctypes.c_long
     lib.tllm_host_device_eval.argtypes = [
         ctypes.c_char_p,
@@ -151,6 +158,15 @@ class Runtime:
         if self._lib.tllm_host_logits(self.handle, arr, len(tokens), out) != 0:
             raise TinyLLMError("forward failed")
         return list(out)
+
+    def generate(self, prompt: list[int], max_new: int) -> list[int]:
+        """Greedy continuation of exact prompt token ids (fresh KV cache, stops at EOS)."""
+        arr = (ctypes.c_int32 * len(prompt))(*prompt)
+        out = (ctypes.c_int32 * max(1, max_new))()
+        n = self._lib.tllm_host_generate(self.handle, arr, len(prompt), max_new, out)
+        if n < 0:
+            raise TinyLLMError("generate failed")
+        return list(out[:n])
 
 
 def alloc_count() -> int:

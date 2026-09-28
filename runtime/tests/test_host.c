@@ -33,6 +33,13 @@ void test_host(void) {
     float *logits = malloc(sizeof(float) * (size_t)tllm_host_vocab_size(h));
     CHECK_EQ_INT(tllm_host_logits(h, ids, n, logits), 0);
     CHECK_EQ_INT(tllm_host_logits(h, ids, 0, logits), -1);
+    int32_t gen[8];
+    int produced = tllm_host_generate(h, ids, n, 8, gen);
+    CHECK(produced >= 1 && produced <= 8);
+    CHECK_EQ_INT(tllm_host_generate(h, ids, 0, 8, gen), -1);
+    int32_t full[256];
+    for (int i = 0; i < 256; ++i) full[i] = 20;
+    CHECK_EQ_INT(tllm_host_generate(h, full, 256, 8, gen), 1); /* context full after one token */
     const char *out = tllm_host_submit(h, "/model-info");
     CHECK_CONTAINS(out, "int8 weights");
     CHECK_CONTAINS(tllm_host_last_json(h), "\"activations\":\"int8\",\"kv_cache\":\"int8\"");

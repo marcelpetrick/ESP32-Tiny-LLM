@@ -30,6 +30,10 @@ def test_chat_protocol_and_no_allocation(model_path: Path) -> None:
         info = rt.command("/model-info")
         assert info["weights"] == "int8"
         assert info["activations"] == "int8"
+        tokens = rt.tokenize("hello")
+        assert 1 <= len(rt.generate([1, *tokens], 5)) <= 5
+        with pytest.raises(runtime.TinyLLMError):
+            rt.generate([], 5)
         bench = rt.command("/benchmark diagnose")
         assert bench["case"] == "diagnose"
         assert rt.command("/set t=36 win=0")["state"].startswith("<S> t=36.0")

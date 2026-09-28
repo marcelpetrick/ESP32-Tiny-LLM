@@ -33,6 +33,9 @@ int tllm_host_tokenize(tllm_host *h, const char *text, int32_t *out, int max_out
 int tllm_host_token_bytes(tllm_host *h, int32_t id, char *out, int max_out);
 /* Fresh KV cache, run all tokens, copy the last logits into out (vocab_size floats). */
 int tllm_host_logits(tllm_host *h, const int32_t *tokens, int n, float *out);
+/* Greedy generation from exact prompt tokens (fresh KV cache) until EOS or max_new tokens;
+ * returns the number of generated tokens (EOS included if produced) or -1 on error. */
+int tllm_host_generate(tllm_host *h, const int32_t *prompt, int n, int max_new, int32_t *out);
 /* Number of heap allocations performed by the runtime since open (must stay constant). */
 long tllm_host_alloc_count(void);
 

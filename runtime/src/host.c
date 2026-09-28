@@ -134,6 +134,21 @@ int tllm_host_logits(tllm_host *h, const int32_t *tokens, int n, float *out) {
     return 0;
 }
 
+int tllm_host_generate(tllm_host *h, const int32_t *prompt, int n, int max_new, int32_t *out) {
+    const float *logits = NULL;
+    tllm_ctx_reset(&h->ctx);
+    if (n <= 0 || max_new < 0 || tllm_prefill(&h->ctx, prompt, (uint32_t)n, &logits) != TLLM_OK) return -1;
+    const uint32_t vocab = h->model.cfg.vocab_size;
+    int produced = 0;
+    while (produced < max_new) {
+        int32_t tok = tllm_sample(h->ctx.logits, vocab, NULL, NULL, NULL, 0);
+        out[produced++] = tok;
+        if (tok == h->model.tok.eos_id || tllm_forward(&h->ctx, tok, &logits) != TLLM_OK) break;
+    }
+    tllm_ctx_reset(&h->ctx);
+    return produced;
+}
+
 int tllm_host_device_eval(const char *settings, const char *action, char *out, size_t cap) {
     tllm_device_state s;
     tllm_device_default(&s);
