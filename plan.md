@@ -3,7 +3,7 @@
 The living plan of this repository: what is done, what is in progress, what is left, and
 what waits for hardware. The phase design is in
 [docs/06-implementation-plan.md](docs/06-implementation-plan.md); the item-by-item check
-against the vision will be `docs/09-vision-status.md` (committed with the sweep results).
+against the vision is [docs/09-vision-status.md](docs/09-vision-status.md).
 
 **Rule** ([AGENTS.md](AGENTS.md) §2.4): every commit updates this file. `scripts/ship.sh`
 refreshes the *Current state* block automatically; edit the tables by hand whenever a
@@ -14,8 +14,8 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 41
-    "In progress" : 1
+    "Done" : 44
+    "In progress" : 0
     "Next (no hardware needed)" : 3
     "Waiting for the ESP32-S3 board" : 6
     "Planned research" : 14
@@ -46,6 +46,7 @@ flowchart LR
 | Verification | Python ↔ C logits within 1e-4; identical output to upstream llama2.c `run.c`; chip tokenizes like Python (QEMU) |
 | Model | 673 k params, 732 KiB INT8; 99 % in-distribution, 88 % unseen phrasing, 99.5 % multi-turn, 99.6 % safety |
 | Experiments | E1–E4 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain |
+| Sweep | 14 variants (vision M8), [Pareto chart](docs/results/sweep.md): RoPE and 2048 vocab are the best levers |
 | Product | web simulator, Docker image on GHCR, firmware with embedded model and board benchmarks |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
 | Repository page | `/githubAbout`: About text and 10 topics applied, each claim traced to a file |
@@ -55,7 +56,6 @@ flowchart LR
 
 | Item | State |
 |---|---|
-| Architecture + vocabulary sweep (vision M8) | training on the GPU (14 variants), then `docs/results/sweep.md` + Pareto SVG |
 
 ## Next (no hardware needed)
 
@@ -75,8 +75,8 @@ gantt
 
 | Item | Detail |
 |---|---|
-| Sweep results page | table + Pareto chart from `tools.sweep --report` |
-| Vision status page | `docs/09-vision-status.md` (links the sweep page) |
+| Next model | retrain 4×128 + RoPE + 2048 vocab for the full budget |
+| Sweep chart | fix overlapping labels in `tools/sweep.py` SVG |
 | Screenshots | retake once the GPU is idle (host timings) |
 | Release checks | full pipeline, CI green, `docker pull` + run, clean tree |
 
@@ -106,12 +106,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.6.18` |
-| Updated | 2026-09-28 14:29 UTC |
-| This commit | docs(plan): record the GitHub About text and topics |
+| Version | `0.7.0` |
+| Updated | 2026-09-28 15:12 UTC |
+| This commit | docs(results): add the architecture sweep and the vision status page |
 
 Recent commits:
 
+- `c6d8ed9` docs(plan): record the GitHub About text and topics
 - `5867c17` fix(tools): never stash plan.md in ship.sh
 - `f3abae9` docs: add plan.md status with charts and update it on every commit
 - `da0f102` fix(data): include the teacher model in the paraphrase cache key
@@ -119,6 +120,5 @@ Recent commits:
 - `0597e39` docs(results): add the M6 distillation experiment comparison
 - `61a240d` fix(tools): skip model manifests in the experiment report
 - `26d84cf` docs: record the tier-L capacity result and the full console command set
-- `d43f52d` fix(web): send a strict Content-Security-Policy
 
 <!-- ship:end -->

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="440" viewBox="0 0 720 440" font-family="system-ui, sans-serif" font-size="12">
+<style>.ax{stroke:#8a958e}.t{fill:#5d6b62}.pt{fill:#9fb5a7}.fr{fill:#2e7d4f}.ln{stroke:#2e7d4f;fill:none;stroke-width:1.5}@media (prefers-color-scheme: dark){.t{fill:#93a39a}.fr{fill:#5cc98a}.ln{stroke:#5cc98a}}</style>
+<line class="ax" x1="60" y1="390" x2="570" y2="390"/>
+<line class="ax" x1="60" y1="30" x2="60" y2="390"/>
+<text class="t" x="315.0" y="428" text-anchor="middle">estimated ESP32-S3 decode time per reply, ms (INT8, 45 MB/s PSRAM)</text>
+<text class="t" x="16" y="210.0" text-anchor="middle" transform="rotate(-90 16 210.0)">action accuracy, unseen phrasing (%)</text>
+<text class="t" x="52" y="394.0" text-anchor="end">75</text>
+<text class="t" x="60.0" y="408" text-anchor="middle">0</text>
+<text class="t" x="52" y="322.0" text-anchor="end">78</text>
+<text class="t" x="162.0" y="408" text-anchor="middle">65</text>
+<text class="t" x="52" y="250.0" text-anchor="end">81</text>
+<text class="t" x="264.0" y="408" text-anchor="middle">130</text>
+<text class="t" x="52" y="178.0" text-anchor="end">84</text>
+<text class="t" x="366.0" y="408" text-anchor="middle">195</text>
+<text class="t" x="52" y="106.0" text-anchor="end">88</text>
+<text class="t" x="468.0" y="408" text-anchor="middle">260</text>
+<text class="t" x="52" y="34.0" text-anchor="end">91</text>
+<text class="t" x="570.0" y="408" text-anchor="middle">325</text>
+<polyline class="ln" points="177.7,279.2 245.4,240.5 252.6,186.2 309.6,181.8 327.5,144.1 373.8,119.7 430.6,96.5"/>
+<circle class="pt" cx="373.8" cy="169.6" r="5"><title>m-4x128</title></circle>
+<text class="t" x="381.8" y="173.6">m-4x128</text>
+<circle class="fr" cx="245.4" cy="240.5" r="5"><title>2x128</title></circle>
+<text class="t" x="253.4" y="244.5">2x128</text>
+<circle class="pt" cx="502.2" cy="160.7" r="5"><title>6x128</title></circle>
+<text class="t" x="510.2" y="164.7">6x128</text>
+<circle class="fr" cx="252.6" cy="186.2" r="5"><title>4x96</title></circle>
+<text class="t" x="260.6" y="190.2">4x96</text>
+<circle class="pt" cx="523.6" cy="172.9" r="5"><title>4x160</title></circle>
+<text class="t" x="531.6" y="176.9">4x160</text>
+<circle class="fr" cx="327.5" cy="144.1" r="5"><title>6x96-deep-thin</title></circle>
+<text class="t" x="335.5" y="148.1">6x96-deep-thin</text>
+<circle class="pt" cx="309.6" cy="187.3" r="5"><title>8x80-deep-thin</title></circle>
+<text class="t" x="317.6" y="191.3">8x80-deep-thin</text>
+<circle class="fr" cx="309.6" cy="181.8" r="5"><title>mqa</title></circle>
+<text class="t" x="317.6" y="185.8">mqa</text>
+<circle class="pt" cx="331.1" cy="165.1" r="5"><title>gqa</title></circle>
+<text class="t" x="339.1" y="169.1">gqa</text>
+<circle class="pt" cx="377.4" cy="145.2" r="5"><title>swiglu</title></circle>
+<text class="t" x="385.4" y="149.2">swiglu</text>
+<circle class="fr" cx="373.8" cy="119.7" r="5"><title>rope</title></circle>
+<text class="t" x="381.8" y="123.7">rope</text>
+<circle class="fr" cx="177.7" cy="279.2" r="5"><title>s-2x96</title></circle>
+<text class="t" x="185.7" y="283.2">s-2x96</text>
+<circle class="pt" cx="389.0" cy="189.5" r="5"><title>vocab-512</title></circle>
+<text class="t" x="397.0" y="193.5">vocab-512</text>
+<circle class="fr" cx="430.6" cy="96.5" r="5"><title>vocab-2048</title></circle>
+<text class="t" x="438.6" y="100.5">vocab-2048</text>
+</svg>

@@ -1,5 +1,8 @@
 # 06 — Implementation plan: a local, ESP32-runnable tiny LLM
 
+> **Status:** phases P0–P9 are implemented; P10 waits for the board. The item-by-item
+> account against the vision is [09-vision-status.md](09-vision-status.md).
+
 The plan turns [`vision.md`](../vision.md) into phases that each end in a green,
 pushed, versioned state. Hardware is not attached yet, so every phase is split into what
 we can **finish and verify on the host now** and what **waits for the board**. Nothing
