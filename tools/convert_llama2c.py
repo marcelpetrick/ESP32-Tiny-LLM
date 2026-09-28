@@ -22,8 +22,8 @@ from pathlib import Path
 
 import numpy as np
 
+from training.config import ModelConfig
 from training.export import write_tllm
-from training.model import ModelConfig
 from training.tokenizer.llama2c import ScoredTokenizer
 
 

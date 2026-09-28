@@ -19,14 +19,17 @@ import struct
 import zlib
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
-import torch
 
-from training.model import ModelConfig, TinyLM
+from training.config import ModelConfig
 from training.quantize import quantize_rows
 from training.tokenizer import Tokenizer
 from training.tokenizer.llama2c import ScoredTokenizer
+
+if TYPE_CHECKING:  # torch is only needed for checkpoints and PyTorch models
+    from training.model import TinyLM
 
 AnyTokenizer = Tokenizer | ScoredTokenizer
 
@@ -265,6 +268,10 @@ def read_tllm(path: Path) -> TllmFile:
 
 def load_model_from_tllm(tllm: TllmFile) -> TinyLM:
     """Build a :class:`TinyLM` with the (dequantised) weights of a parsed file."""
+    import torch  # noqa: PLC0415 - optional heavy dependency
+
+    from training.model import TinyLM  # noqa: PLC0415
+
     model = TinyLM(tllm.cfg)
     sd = model.state_dict()
     for name, array in tllm.tensors.items():
@@ -288,6 +295,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--dtype", choices=sorted(_DTYPES), default="i8")
     args = parser.parse_args(argv)
+    import torch  # noqa: PLC0415 - optional heavy dependency
+
+    from training.model import TinyLM  # noqa: PLC0415
+
     ckpt = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
     cfg = ModelConfig.from_json(ckpt["config"])
     model = TinyLM(cfg)

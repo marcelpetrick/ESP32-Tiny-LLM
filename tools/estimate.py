@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 
-from training.model import ModelConfig
+from training.config import ModelConfig
 
 DEFAULT_BANDWIDTH = 45e6  # bytes/s, derived from published ESP32-S3 results (docs/01 §2)
 EFFICIENCY_BAND = (0.5, 0.9)

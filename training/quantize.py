@@ -10,11 +10,12 @@ Each output row ``r`` of a weight matrix gets its own scale ``s_r = max|W[r,:]| 
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING
 
 import numpy as np
-import torch
 
-from training.model import TinyLM
+if TYPE_CHECKING:
+    from training.model import TinyLM
 
 QMAX = 127
 
@@ -36,6 +37,8 @@ def dequantize_rows(q: np.ndarray, scales: np.ndarray) -> np.ndarray:
 
 def fake_quantize(model: TinyLM) -> TinyLM:
     """Copy of ``model`` whose 2-D weights (except positions) are INT8-rounded (W8A32)."""
+    import torch  # noqa: PLC0415 - optional heavy dependency
+
     clone = copy.deepcopy(model)
     with torch.no_grad():
         for name, param in clone.named_parameters():
