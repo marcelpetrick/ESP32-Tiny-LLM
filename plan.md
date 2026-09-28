@@ -48,7 +48,7 @@ flowchart LR
 | Experiments | E1–E4 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain |
 | Product | web simulator, Docker image on GHCR, firmware with embedded model and board benchmarks |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
-| Process | `plan.md` + AGENTS.md rule; `ship.sh` refreshes it on every commit |
+| Process | `plan.md` + AGENTS.md rule; `ship.sh` refreshes it on every commit (never stashes it) |
 
 ## In progress
 
@@ -106,12 +106,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.6.16` |
-| Updated | 2026-09-28 14:22 UTC |
-| This commit | docs: add plan.md status with charts and update it on every commit |
+| Version | `0.6.17` |
+| Updated | 2026-09-28 14:25 UTC |
+| This commit | fix(tools): never stash plan.md in ship.sh |
 
 Recent commits:
 
+- `f3abae9` docs: add plan.md status with charts and update it on every commit
 - `da0f102` fix(data): include the teacher model in the paraphrase cache key
 - `39ddb45` fix(runtime): keep only well-formed replies in the conversation history
 - `0597e39` docs(results): add the M6 distillation experiment comparison
@@ -119,6 +120,5 @@ Recent commits:
 - `26d84cf` docs: record the tier-L capacity result and the full console command set
 - `d43f52d` fix(web): send a strict Content-Security-Policy
 - `c9562b9` feat(tools): add experiment comparison table
-- `9526ffb` feat(tools): compare vocabulary sizes and rank by estimated reply latency
 
 <!-- ship:end -->

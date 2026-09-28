@@ -38,8 +38,9 @@ conventional='^(feat|fix|docs|test|refactor|perf|build|ci|chore|style|revert)(\(
 cd "${REPO_ROOT}"
 git diff --cached --quiet && die "nothing staged"
 stashed=0
-if ! git diff --quiet || [[ -n "$(git ls-files --others --exclude-standard)" ]]; then
-    git stash push -q --keep-index --include-untracked -m "ship.sh: unrelated work"
+# plan.md is never stashed: every commit carries it (AGENTS.md §2.4) and it is rewritten below
+if ! git diff --quiet -- . ':!plan.md' || [[ -n "$(git ls-files --others --exclude-standard -- . ':!plan.md')" ]]; then
+    git stash push -q --keep-index --include-untracked -m "ship.sh: unrelated work" -- . ':!plan.md'
     stashed=1
     log "stashed unrelated work while the pipeline runs"
 fi
