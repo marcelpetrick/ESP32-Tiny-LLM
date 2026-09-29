@@ -11,7 +11,8 @@ int g_checks;
 
 #define TESTS(X)                                                                                                       \
     X(test_kernels)                                                                                                    \
-    X(test_loader) X(test_tokenizer) X(test_transformer) X(test_sampler) X(test_device) X(test_console) X(test_host)
+    X(test_loader)                                                                                                     \
+    X(test_tokenizer) X(test_transformer) X(test_sampler) X(test_device) X(test_facts) X(test_console) X(test_host)
 
 #define DECLARE(name) void name(void);
 TESTS(DECLARE)

@@ -137,6 +137,8 @@ add up, CRC mismatch, `ctx_len`/`d_model` above compile-time limits, and unknown
   every UTF-8 input is encodable (no unknown token).
 - IDs `0..N_SPECIAL-1` are control tokens: `<pad> <bos> <eos> <S> </S> <U> </U> <A> </A>
   <ACT> </ACT> <clarify> <unsupported>`; then 256 byte tokens; then merges.
+- Facts-enabled models (retrieval, below) add two more control tokens, `<F> </F>`; the
+  console detects them in the tokenizer blob, so older models are unaffected.
 - Pre-tokenisation splits letters, single digits, spaces-with-word, and punctuation, so
   numbers like `31.2` tokenize predictably.
 - Deployed form: token byte strings + ranked merge list; encoding applies the lowest-rank
@@ -213,6 +215,16 @@ firmware UART — so one test suite covers all three.
 | `/execute on\|off` | apply approved actions to the simulated device, or only report them |
 | `/reset` | conversation and simulated device back to defaults |
 | `/bandwidth`, `/gemv` | firmware only: memory read bandwidth per tier, GEMV throughput ([08](08-firmware.md)) |
+
+**Retrieval of device facts (vision §24 D).** Before a chat turn the console looks up at
+most one short fact by keyword in the user's line (`runtime/src/facts.c`, identical to
+`training/world/facts.py`: ASCII lowercase, first table entry with a whole-word keyword
+match) and, if the model has `<F> </F>`, injects it after the state:
+`<bos>…<S> state</S><F> fact</F><U> user</U><A>`. The model learns to answer by copying
+injected text (60 % of the training questions are about synthetic facts that change every
+sample), so manual knowledge lives in a table instead of parameters and can be updated
+without retraining. Four table facts are never shown in training; the `facts_heldout`
+suite measures answering from them. Facts are not stored in the conversation history.
 
 Every reply ends with one machine-readable line for the serial runner / HIL harness:
 

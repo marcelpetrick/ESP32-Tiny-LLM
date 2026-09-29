@@ -235,3 +235,26 @@ def test_diagnosis_without_remedy_emits_diag_token() -> None:
     assert "e3" in reply
     reply, action = dlg.diagnosis_reply("too_humid", DeviceState(h=90, fan=3))
     assert action == "diag=too_humid"
+
+
+def test_fact_turns_copy_the_injected_fact() -> None:
+    from training.world.facts import FACTS, retrieve  # noqa: PLC0415
+
+    gen = DialogueGenerator(11, facts="train", typo_p=0.5)
+    samples = [gen.sample() for _ in range(3000)]
+    asks = [s for s in samples if s.turn.intent == "ask_fact"]
+    assert len(asks) > 50
+    assert all(s.turn.reply == s.fact and s.turn.action is None for s in asks)
+    assert any(retrieve(s.turn.user) is None for s in asks)  # synthetic facts
+    heldout_texts = {f.text for f in FACTS if f.heldout}
+    assert not any(s.fact in heldout_texts for s in samples)
+    other = [s for s in samples if s.fact is not None and s.turn.intent != "ask_fact"]
+    assert other  # incidental retrieval on ordinary turns (the model learns to ignore it)
+    held = DialogueGenerator(12, facts="heldout")
+    for _ in range(50):
+        s = held.sample()
+        assert s.fact in heldout_texts
+        found = retrieve(s.turn.user)
+        assert found is not None
+        assert found.text == s.fact
+    assert DialogueGenerator(1).sample().fact is None

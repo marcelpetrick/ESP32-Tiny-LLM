@@ -31,6 +31,7 @@ from training.world import (
     validate_action,
 )
 from training.world.actions import OVERHEAT_LIMIT_C
+from training.world.facts import FACTS, retrieve
 
 CLARIFY = "<clarify>"
 UNSUPPORTED = "<unsupported>"
@@ -66,6 +67,42 @@ class Sample:
     history: tuple[Turn, ...]
     state: DeviceState
     turn: Turn
+    fact: str | None = None  # retrieved fact injected as <F> fact</F> (facts-enabled models only)
+
+
+FACT_FRAMES = (
+    "what about {k}", "tell me about {k}", "what does {k} mean", "{k}?", "explain {k}",
+    "i have a question about {k}", "what should i know about {k}",
+)  # fmt: skip
+_SYN_THINGS = (
+    "the side door",
+    "the rain sensor",
+    "the seed tray",
+    "the fuse",
+    "the main valve",
+    "the backup battery",
+    "the co2 sensor",
+    "the shade net",
+    "the drip line",
+    "the compost bin",
+    "the air filter",
+    "the roof panel",
+)
+_SYN_TEMPLATES = (
+    "{t} is checked every {n} days.",
+    "{t} lasts about {n} months.",
+    "{t} must stay below {n} degrees.",
+    "{t} is replaced after {n} years.",
+    "{t} needs cleaning every {n} weeks.",
+    "{t} holds {n} litres.",
+)
+
+
+def synthetic_fact(rng: random.Random) -> tuple[str, str]:
+    """A random fact about a made-up component; teaches copying instead of memorising."""
+    thing = rng.choice(_SYN_THINGS)
+    text = rng.choice(_SYN_TEMPLATES).format(t=thing, n=rng.randint(2, 40))
+    return text, thing.removeprefix("the ")
 
 
 class GenerationError(RuntimeError):
@@ -269,6 +306,7 @@ class DialogueGenerator:
         teacher: Mapping[str, Sequence[str]] | None = None,
         p_teacher: float = 0.0,
         typo_p: float = 0.0,
+        facts: str = "off",
     ) -> None:
         self.rng = random.Random(seed)
         self.heldout = heldout
@@ -276,6 +314,9 @@ class DialogueGenerator:
         self.teacher = teacher or {}
         self.p_teacher = p_teacher
         self.typo_p = typo_p
+        # "off": no retrieval; "train": table facts (not held out) + synthetic facts;
+        # "heldout": every final turn asks about a held-out table fact
+        self.facts = facts
 
     # -- helpers --------------------------------------------------------------------
     def frame(self, intent: str) -> str:
@@ -672,5 +713,29 @@ class DialogueGenerator:
             prev = turn
         pool = REFERENCE_INTENTS if want_reference else SINGLE_INTENTS
         intent = rng.choices(list(pool), weights=list(pool.values()))[0]
+        if self.facts == "heldout" or (
+            self.facts == "train" and not want_reference and rng.random() < 0.08
+        ):
+            question, text = self.fact_turn()
+            return Sample(tuple(history), state, question, text)
         final = self.checked(state, self.make_turn(intent, state, prev))
-        return Sample(tuple(history), state, final)
+        fact = retrieve(final.user) if self.facts != "off" else None
+        if fact is not None and fact.heldout and self.facts == "train":
+            fact = None  # never show held-out facts during training
+        return Sample(tuple(history), state, final, fact.text if fact else None)
+
+    def fact_turn(self) -> tuple[Turn, str]:
+        """A question answered by copying the injected fact (table or synthetic)."""
+        rng = self.rng
+        if self.facts == "train" and rng.random() < 0.6:
+            text, keyword = synthetic_fact(rng)
+        else:
+            fact = rng.choice([f for f in FACTS if f.heldout == (self.facts == "heldout")])
+            keyword, text = rng.choice(fact.keywords), fact.text
+        plain = rng.choice(FACT_FRAMES).format(k=keyword)
+        user = self.decorate(plain)
+        if retrieve(user) != retrieve(plain):
+            user = (
+                plain  # decoration broke the keyword or hit another fact: keep the plain question
+            )
+        return Turn(user, text, None, "ask_fact", tags=frozenset({"fact"})), text

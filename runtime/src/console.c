@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "tinyllm/console.h"
+#include "tinyllm/facts.h"
 
 #define REPLY_RESERVE 48u /* tokens kept free for the answer when trimming history */
 #define ACTION_MAX_TOKENS 24u
@@ -166,6 +167,9 @@ tllm_status tllm_console_init(tllm_console *con, tllm_ctx *ctx, tllm_write_fn wr
         *specials[i].id = tllm_special_id(t, specials[i].name);
         if (*specials[i].id < 0) con->chat = 0;
     }
+    con->f_open = tllm_special_id(t, "<F>");
+    con->f_close = tllm_special_id(t, "</F>");
+    con->fact = -1;
     return TLLM_OK;
 }
 
@@ -206,6 +210,14 @@ static int build_prompt(tllm_console *con, const char *user, uint32_t *n_prompt,
     if (append_id(con->s_open, tail, &n_tail, tail_cap) || append_text(t, body, tail, &n_tail, tail_cap) ||
         append_id(con->s_close, tail, &n_tail, tail_cap))
         return -1;
+    con->fact = con->f_open >= 0 && con->f_close >= 0 ? tllm_fact_retrieve(user) : -1;
+    if (con->fact >= 0) {
+        char fact_seg[TLLM_FACT_TEXT_MAX + 2];
+        seg(tllm_fact_text(con->fact), fact_seg, sizeof fact_seg);
+        if (append_id(con->f_open, tail, &n_tail, tail_cap) || append_text(t, fact_seg, tail, &n_tail, tail_cap) ||
+            append_id(con->f_close, tail, &n_tail, tail_cap))
+            return -1;
+    }
     uint32_t u_at = n_tail;
     if (append_id(con->u_open, tail, &n_tail, tail_cap) || append_text(t, user_seg, tail, &n_tail, tail_cap) ||
         append_id(con->u_close, tail, &n_tail, tail_cap) || append_id(con->a_open, tail, &n_tail, tail_cap))
@@ -418,6 +430,7 @@ static void chat(tllm_console *con, const char *line, int stream, const char *ev
     jkey_str(&j, "verdict", have_action ? tllm_verdict_code(verdict) : NULL);
     jkey_str(&j, "message", have_action ? tllm_verdict_message(verdict) : NULL);
     jkey_str(&j, "state", state_text);
+    if (con->f_open >= 0) jkey_str(&j, "fact", tllm_fact_name(con->fact));
     double decode_s = (double)rs.decode_us / 1e6;
     uint32_t decoded = rs.gen_tokens > 0u ? rs.gen_tokens - 1u : 0u; /* the first token comes from prefill */
     jfmt(&j, ",\"prompt_tokens\":%u,\"reused_tokens\":%u,\"gen_tokens\":%u", rs.prompt_tokens, rs.reused,

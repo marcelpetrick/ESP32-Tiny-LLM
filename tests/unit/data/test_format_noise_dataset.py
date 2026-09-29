@@ -125,3 +125,34 @@ def test_build_reuses_a_given_tokenizer(tmp_path: Path) -> None:
         ["--out", str(second), "--scale", "0.001", "--tokenizer", str(first / "tokenizer.json")]
     )
     assert (second / "tokenizer.json").read_text() == (first / "tokenizer.json").read_text()
+
+
+def test_prompt_layout_with_fact() -> None:
+    s = _sample()
+    with_fact = Sample(s.history, s.state, s.turn, "the tank holds 20 litres.")
+    text = prompt_text(with_fact, history=0)
+    assert "</S><F> the tank holds 20 litres.</F><U> switch it on</U><A>" in text
+
+
+def test_build_with_facts(tmp_path: Path) -> None:
+    manifest = dataset.build(tmp_path / "f", scale=0.004, vocab_size=500, facts=True)
+    splits = manifest["splits"]
+    assert isinstance(splits, dict)
+    assert manifest["facts"] is True
+    assert "facts_heldout" in splits
+    held = [json.loads(line) for line in (tmp_path / "f" / "facts_heldout.jsonl").open()]
+    assert held
+    assert all("<F>" in r["prompt"] and r["intent"] == "ask_fact" for r in held)
+    train = (tmp_path / "f" / "train.jsonl").read_text()
+    assert "<F>" in train
+    for fact in ("two year warranty", "potting soil with", "insects once a week"):
+        assert fact not in train  # held-out facts never reach training
+    plain = _plain_tokenizer(tmp_path)
+    with pytest.raises(ValueError, match="--facts"):
+        dataset.build(tmp_path / "h", scale=0.001, tokenizer_path=plain, facts=True)
+
+
+def _plain_tokenizer(tmp_path: Path) -> Path:
+    path = tmp_path / "plain.json"
+    train_bpe(["hello world"], SPECIAL_TOKENS, 300).save(path)
+    return path

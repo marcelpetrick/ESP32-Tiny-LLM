@@ -12,9 +12,9 @@
 
 #include "tinyllm/tinyllm.h"
 
-static const char *const SPECIALS[TEST_N_SPECIAL] = {"<pad>",  "<bos>",     "<eos>",        "<S>",  "</S>",
-                                                     "<U>",    "</U>",      "<A>",          "</A>", "<ACT>",
-                                                     "</ACT>", "<clarify>", "<unsupported>"};
+static const char *const SPECIALS[TEST_N_SPECIAL + 2] = {"<pad>",  "<bos>",     "<eos>",         "<S>",  "</S>",
+                                                         "<U>",    "</U>",      "<A>",           "</A>", "<ACT>",
+                                                         "</ACT>", "<clarify>", "<unsupported>", "<F>",  "</F>"};
 
 typedef struct {
     uint8_t *buf;
@@ -105,7 +105,8 @@ test_blob test_build_model(const test_model_spec *s) {
     test_blob out;
     memset(&out, 0, sizeof out);
     g_rng = s->seed ? s->seed : 1u;
-    const uint32_t n_special = (s->omit_chat_specials || s->scored) ? 3u : TEST_N_SPECIAL;
+    const uint32_t n_special =
+        (s->omit_chat_specials || s->scored) ? 3u : TEST_N_SPECIAL + (s->fact_specials ? 2u : 0u);
     const uint32_t S = n_special;
     const uint32_t merges[8][2] = {{S + 't', S + 'h'}, {S + 256, S + 'e'}, {S + ' ', S + 't'}, {S + 'f', S + 'a'},
                                    {S + 259, S + 'n'}, {S + 'a', S + 'n'}, {S + ' ', S + 257}, {S + 260, S + '='}};

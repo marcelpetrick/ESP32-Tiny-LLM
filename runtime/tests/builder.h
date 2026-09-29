@@ -18,6 +18,7 @@ typedef struct {
     int zero_blocks;        /* 1: attention/MLP outputs are zero (embedding-only model) */
     int omit_chat_specials; /* 1: only <pad> <bos> <eos> specials */
     int scored;             /* 1: llama2.c-style scored tokenizer (blob v2, 3 specials, 8 pieces) */
+    int fact_specials;      /* 1: append <F> </F> (fact retrieval models, 15 specials) */
     uint32_t seed;
 } test_model_spec;
 

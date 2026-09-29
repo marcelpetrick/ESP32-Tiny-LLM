@@ -102,7 +102,7 @@ behind a framework (custom runtime).
 | §24 A | per-layer embeddings in flash | planned |
 | §24 B | multi-query attention | **done** (runtime + sweep) |
 | §24 C | sliding-window chat memory | **done** — console trims oldest exchanges; state is always current |
-| §24 D | retrieval without a second LLM | planned |
+| §24 D | retrieval without a second LLM | partial — fact table + keyword retrieval in Python and C (parity-tested), `<F>` prompt injection; facts model in training |
 | §24 E | hybrid classifier + generator | partial — keyword baseline exists for comparison |
 | §24 F | sensor-token multimodality | planned (format does not assume text-only tokens) |
 | §24 G | on-device adaptation | planned |

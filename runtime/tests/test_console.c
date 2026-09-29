@@ -291,6 +291,37 @@ void test_console(void) {
     CHECK_CONTAINS(run(f, toolong), "input too long"); /* 246 unmerged letters > 128 tokens */
     teardown(f);
 
+    /* chat models without <F> </F> never retrieve or report a fact */
+    CHECK_EQ_INT(f->con.f_open, -1);
+    CHECK(strstr(tllm_console_last_json(&f->con), "\"fact\"") == NULL);
+    /* models with <F> </F>: the console injects the retrieved fact after the state */
+    {
+        test_model_spec fs = test_default_spec();
+        fs.fact_specials = 1;
+        fs.ctx_len = 1024; /* state + fact + question as unmerged bytes */
+        test_blob fb = test_build_model(&fs);
+        tllm_model fm;
+        CHECK_EQ_INT(tllm_model_load(&fm, fb.data, fb.size), TLLM_OK);
+        size_t fhs = tllm_hot_arena_size(&fm), fcs = tllm_cold_arena_size(&fm, 0);
+        void *fhot = malloc(fhs), *fcold = malloc(fcs);
+        tllm_ctx fctx;
+        CHECK_EQ_INT(tllm_ctx_init(&fctx, &fm, NULL, fhot, fhs, fcold, fcs), TLLM_OK);
+        f->out_len = 0;
+        CHECK_EQ_INT(tllm_console_init(&f->con, &fctx, capture, f), TLLM_OK);
+        CHECK_EQ_INT(f->con.f_open, TEST_N_SPECIAL);
+        CHECK_EQ_INT(f->con.f_close, TEST_N_SPECIAL + 1);
+        run(f, "/max-tokens 2");
+        CHECK_CONTAINS(run(f, "What does E5 mean"), "\"fact\":\"e5\"");
+        int saw_f = 0;
+        for (uint32_t i = 1; i < fctx.n_cached; ++i)
+            if (fctx.tokens[i] == f->con.f_open && fctx.tokens[i - 1u] == f->con.s_close) saw_f = 1;
+        CHECK(saw_f);
+        CHECK_CONTAINS(run(f, "hello"), "\"fact\":null");
+        for (uint32_t i = 0; i < f->con.hist_len; ++i) CHECK(f->con.hist[i] != f->con.f_open); /* never remembered */
+        free(fhot);
+        free(fcold);
+        test_free_blob(&fb);
+    }
     /* models without chat tokens run in story mode (llama2.c-style scored tokenizer) */
     test_model_spec spec = test_default_spec();
     spec.scored = 1;

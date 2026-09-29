@@ -28,19 +28,19 @@ import json
 import random
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
 from training import project_version
 from training.data.dialogue import DialogueGenerator, Sample
 from training.data.noise import add_typos
-from training.data.textformat import SPECIAL_TOKENS, prompt_text, target_text
+from training.data.textformat import FACT_TOKENS, SPECIAL_TOKENS, prompt_text, target_text
 from training.tokenizer import Tokenizer, train_bpe
 
 GENERATOR_VERSION = 1
 _SPECIAL_SPLIT = re.compile(
-    "|".join(re.escape(s) for s in sorted(SPECIAL_TOKENS, key=len, reverse=True))
+    "|".join(re.escape(s) for s in sorted(SPECIAL_TOKENS + FACT_TOKENS, key=len, reverse=True))
 )
 
 
@@ -59,19 +59,24 @@ class SplitSpec:
     teacher_part: str | None = None  # "train" or "test" paraphrases, None = templates only
     p_teacher: float = 0.0
     typo_p: float = 0.0
+    facts: str = "off"  # retrieval (vision §24 D): "off", "train" or "heldout" facts
 
 
 def _is_safety(sample: Sample) -> bool:
     return bool({"safety", "clarify"} & sample.turn.tags)
 
 
-def default_splits(scale: float = 1.0) -> list[SplitSpec]:
-    """The standard split set; ``scale`` multiplies all sizes (tests use tiny scales)."""
+def default_splits(scale: float = 1.0, facts: bool = False) -> list[SplitSpec]:
+    """The standard split set; ``scale`` multiplies all sizes (tests use tiny scales).
+
+    With ``facts`` every split injects retrieved facts and a ``facts_heldout`` split asks
+    only about facts that never occur in training (answering from unseen injected text).
+    """
 
     def n(size: int) -> int:
         return max(4, int(size * scale))
 
-    return [
+    specs = [
         SplitSpec("train", n(200_000), 1, teacher_part="train", p_teacher=0.5, typo_p=0.1),
         SplitSpec("val", n(4_000), 2, teacher_part="train", p_teacher=0.5, typo_p=0.1),
         SplitSpec("test_id", n(3_000), 3, teacher_part="train", p_teacher=0.5, typo_p=0.1),
@@ -80,6 +85,11 @@ def default_splits(scale: float = 1.0) -> list[SplitSpec]:
         SplitSpec("robust", n(3_000), 5, noise=0.6, typos=1),
         SplitSpec("multiturn", n(2_000), 6, force_reference=True),
         SplitSpec("safety", n(2_000), 7, keep=_is_safety),
+    ]
+    if not facts:
+        return specs
+    return [replace(spec, facts="train") for spec in specs] + [
+        SplitSpec("facts_heldout", n(1_000), 9, noise=0.0, facts="heldout")
     ]
 
 
@@ -103,6 +113,7 @@ def generate(spec: SplitSpec, teacher: dict[str, Any] | None = None) -> list[Sam
         teacher=bank,
         p_teacher=spec.p_teacher,
         typo_p=spec.typo_p,
+        facts=spec.facts,
     )
     typo_rng = random.Random(spec.seed * 7919)
     out: list[Sample] = []
@@ -114,7 +125,10 @@ def generate(spec: SplitSpec, teacher: dict[str, Any] | None = None) -> list[Sam
             turn = sample.turn
             noisy = add_typos(turn.user, typo_rng, spec.typos)
             sample = Sample(
-                sample.history, sample.state, type(turn)(**{**turn.__dict__, "user": noisy})
+                sample.history,
+                sample.state,
+                type(turn)(**{**turn.__dict__, "user": noisy}),
+                sample.fact,
             )
         out.append(sample)
     return out
@@ -161,6 +175,7 @@ def build(
     vocab_size: int = 1024,
     teacher_path: Path | None = None,
     tokenizer_path: Path | None = None,
+    facts: bool = False,
 ) -> dict[str, object]:
     """Generate all splits, train (or reuse) the tokenizer, write JSONL + manifest.
 
@@ -168,15 +183,18 @@ def build(
     different data variants can be evaluated on identical token sequences.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
-    specs = default_splits(scale)
+    specs = default_splits(scale, facts)
     teacher = load_teacher(teacher_path)
     if not teacher["paraphrases"]:
         specs = [spec for spec in specs if spec.name != "teacher_test"]
     samples = {spec.name: generate(spec, teacher) for spec in specs}
     if tokenizer_path is not None:
         tok = Tokenizer.load(tokenizer_path)
+        if facts and not set(FACT_TOKENS) <= set(tok.specials):
+            raise ValueError(f"{tokenizer_path} has no {FACT_TOKENS} tokens (needed for --facts)")
     else:
-        tok = train_bpe(plain_segments(samples["train"]), SPECIAL_TOKENS, vocab_size)
+        specials = SPECIAL_TOKENS + FACT_TOKENS if facts else SPECIAL_TOKENS
+        tok = train_bpe(plain_segments(samples["train"]), specials, vocab_size)
     tok.save(out_dir / "tokenizer.json")
     train_prompts: set[str] = set()
     stats: dict[str, dict[str, int]] = {}
@@ -212,6 +230,7 @@ def build(
         if teacher_path is not None and teacher_path.exists()
         else None,
         "ctx": ctx,
+        "facts": facts,
         "vocab_size": tok.vocab_size,
         "splits": {
             spec.name: {
@@ -245,8 +264,11 @@ def main(argv: list[str] | None = None) -> int:
         "--teacher", type=Path, default=None, help="paraphrases.json from training.data.teacher"
     )
     parser.add_argument("--tokenizer", type=Path, default=None, help="reuse this tokenizer.json")
+    parser.add_argument("--facts", action="store_true", help="inject retrieved device facts")
     args = parser.parse_args(argv)
-    manifest = build(args.out, args.scale, args.ctx, args.vocab, args.teacher, args.tokenizer)
+    manifest = build(
+        args.out, args.scale, args.ctx, args.vocab, args.teacher, args.tokenizer, args.facts
+    )
     print(json.dumps(manifest["splits"], indent=2))
     print(f"vocab_size={manifest['vocab_size']}")
     return 0

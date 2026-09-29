@@ -60,6 +60,9 @@ typedef struct tllm_console_s {
     char json[TLLM_CONSOLE_JSON_MAX];
     /* special token ids */
     int32_t bos, eos, s_open, s_close, u_open, u_close, a_open, a_close, act_open, act_close, clarify, unsupported;
+    /* optional fact retrieval (vision §24 D): -1 when the model has no <F>/</F> tokens */
+    int32_t f_open, f_close;
+    int fact; /* fact injected into the last prompt (tllm_fact_* index) or -1 */
 } tllm_console;
 
 /* Returns TLLM_OK, or TLLM_ERR_TOKENIZER if the model has no BOS/EOS tokens. Models

@@ -4,7 +4,7 @@
 
 ::
 
-    <bos>[<U> user</U><A> reply</A>[<ACT> body</ACT>]]*<S> state</S><U> user</U><A>
+    <bos>[<U> user</U><A> reply</A>[<ACT> body</ACT>]]*<S> state</S>[<F> fact</F>]<U> user</U><A>
     target:  reply</A>[<ACT> body</ACT>]<eos>
 
 Plain text following a special token starts with a single space, unless it itself
@@ -20,6 +20,8 @@ SPECIAL_TOKENS = (
     "<pad>", "<bos>", "<eos>", "<S>", "</S>", "<U>", "</U>", "<A>", "</A>",
     "<ACT>", "</ACT>", "<clarify>", "<unsupported>",
 )  # fmt: skip
+# Only tokenizers of facts-enabled models (vision §24 D retrieval) get these two tokens.
+FACT_TOKENS = ("<F>", "</F>")
 
 
 def _seg(text: str) -> str:
@@ -45,7 +47,8 @@ def prompt_text(sample: Sample, history: int | None = None) -> str:
     if history == 0:
         turns = ()
     body = "".join(history_text(t) for t in turns)
-    return f"<bos>{body}{render_state(sample.state)}<U>{_seg(sample.turn.user)}</U><A>"
+    fact = f"<F>{_seg(sample.fact)}</F>" if sample.fact is not None else ""
+    return f"<bos>{body}{render_state(sample.state)}{fact}<U>{_seg(sample.turn.user)}</U><A>"
 
 
 def target_text(turn: Turn) -> str:

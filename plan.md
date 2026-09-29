@@ -15,10 +15,10 @@ work item changes state.
 pie showData
     title Work items by state
     "Done" : 49
-    "In progress" : 0
+    "In progress" : 2
     "Next (no hardware needed)" : 1
     "Waiting for the ESP32-S3 board" : 6
-    "Planned research" : 13
+    "Planned research" : 11
 ```
 
 ```mermaid
@@ -58,6 +58,8 @@ flowchart LR
 
 | Item | State |
 |---|---|
+| Retrieval of device facts (§24 D) | fact table + retrieval in Python and C (parity-tested), `<F>` injection in the console, dataset `--facts` with a `facts_heldout` suite; next: train and evaluate a facts model |
+| On-policy correction (E5) | seen phrasing gave only 47/20 000 errors; mining on a fresh teacher round (unseen phrasing) running |
 
 ## Next (no hardware needed)
 
@@ -90,9 +92,9 @@ gantt
 ## Planned research (after v1, vision §24–25)
 
 ternary (BitNet) student · LUT-based low-bit GEMV ·
-per-layer embeddings in flash · factorised embeddings / layer sharing · on-policy
-distillation (E5) · joint tokenizer for a fair language-prior test · chat-lite corpus
-(persona, small talk) · retrieval of device facts · sensor-token encoder · on-device
+per-layer embeddings in flash · factorised embeddings / layer sharing ·
+joint tokenizer for a fair language-prior test · chat-lite corpus
+(persona, small talk) · sensor-token encoder · on-device
 adaptation · energy per token · Espressif operators as oracle · hybrid recurrent/local
 attention.
 
@@ -102,12 +104,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.9.1` |
-| Updated | 2026-09-29 12:29 UTC |
-| This commit | feat(firmware): split large GEMVs across both ESP32-S3 cores on demand |
+| Version | `0.9.2` |
+| Updated | 2026-09-29 12:47 UTC |
+| This commit | feat(runtime): retrieve device facts and inject them for facts-enabled models |
 
 Recent commits:
 
+- `5062eb7` feat(firmware): split large GEMVs across both ESP32-S3 cores on demand
 - `f98074f` feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model
 - `6446702` feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep
 - `200ceac` ci(docker): label the image GPL-3.0-or-later
@@ -115,6 +118,5 @@ Recent commits:
 - `bdf2dcb` fix(tools): place sweep chart labels without overlaps
 - `4400df9` docs(results): add the architecture sweep and the vision status page
 - `c6d8ed9` docs(plan): record the GitHub About text and topics
-- `5867c17` fix(tools): never stash plan.md in ship.sh
 
 <!-- ship:end -->

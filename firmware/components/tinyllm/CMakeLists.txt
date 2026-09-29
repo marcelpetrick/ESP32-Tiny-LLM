@@ -5,6 +5,6 @@
 set(rt "${CMAKE_CURRENT_LIST_DIR}/../../../runtime")
 idf_component_register(
     SRCS "${rt}/src/model_loader.c" "${rt}/src/kernels.c" "${rt}/src/tokenizer.c"
-         "${rt}/src/transformer.c" "${rt}/src/sampler.c" "${rt}/src/device.c" "${rt}/src/console.c"
+         "${rt}/src/transformer.c" "${rt}/src/sampler.c" "${rt}/src/device.c" "${rt}/src/facts.c" "${rt}/src/console.c"
     INCLUDE_DIRS "${rt}/include")
 target_compile_options(${COMPONENT_LIB} PRIVATE -O2 -Wall -Wextra -Werror -Wdouble-promotion)

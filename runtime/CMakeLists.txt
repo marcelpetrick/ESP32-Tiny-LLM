@@ -21,7 +21,7 @@ set(TLLM_WARNINGS -Wall -Wextra -Wpedantic -Werror -Wshadow -Wdouble-promotion -
 
 set(TLLM_CORE_SOURCES
     src/model_loader.c src/kernels.c src/tokenizer.c src/transformer.c src/sampler.c
-    src/device.c src/console.c)
+    src/device.c src/facts.c src/console.c)
 
 add_library(tinyllm STATIC ${TLLM_CORE_SOURCES})
 target_include_directories(tinyllm PUBLIC include)
