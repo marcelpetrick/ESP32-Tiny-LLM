@@ -92,6 +92,7 @@ Supported hyper-parameters (all read from the model header): `n_layers`, `d_mode
 | `f32` | fp32 | fp32 | fp32 | reference, bit-comparable with PyTorch |
 | `i8` weight-only (W8A32) | int8, one fp32 scale per output row | fp32 | fp32 | vision O3 — simplest INT8 |
 | `i8` W8A8 | int8 per-row | int8 dynamic per-vector scale | int32 | vision O4 — the path PIE/ESP-NN accelerate |
+| `q4` W4A32 / W4A8 | 4-bit, groups of 32 per row, one float16 scale per group (0.5625 B/weight) | fp32 or int8 | fp32 / int32 per group | vision O9 — halves weight traffic; matrices whose width is not a multiple of 32 stay int8 |
 
 Norm weights, positional table and scales stay fp32 (vision §11 "mixed precision").
 
@@ -118,7 +119,8 @@ tensors are used **in place** from the loaded/mapped blob.
 | 108 | reserved (zero) | 20 × u8 |
 
 The tensor table holds `{name[32], dtype, n_dims, dims[4], data_offset, data_size,
-scale_offset}` per tensor (68 bytes each; `dtype` 0 = f32, 1 = i8; `scale_offset` =
+scale_offset}` per tensor (68 bytes each; `dtype` 0 = f32, 1 = i8, 2 = q4 — two
+nibbles per byte, low nibble first, value + 8, followed by little-endian float16 group scales; `scale_offset` =
 `0xFFFFFFFF` for unscaled tensors). Tensor order and names: `tok_emb`, `pos_emb` (learned
 positions only), then per layer `l{i}.attn_norm, wq, wk, wv, wo, mlp_norm, w1, w2[, w3]`,
 then `final_norm`. Matrices are stored `[out, in]` row-major, so every output element is a

@@ -49,7 +49,7 @@ marked done that is not in the repository with a test or a reproducible script.
 | RoPE, MQA/GQA, SwiGLU variants | done in runtime + training; compared in the sweep |
 | 1K tokenizer with control tokens, digits, domain words, deterministic C/Python | done (1024) — 2K comparison: domain vocabulary saturates near 1024, see §Open items |
 | language + structured intent, strict parser, firmware validation | done |
-| FP32 reference → INT8 | done; mixed precision (norms, positions, logits in f32) done; INT4 planned |
+| FP32 reference → INT8 → INT4 | done; mixed precision (norms, positions, logits in f32); Q4 group-wise kernels (W4A32, W4A8) with no measurable quality loss at 446 KiB ([results](results/greenhouse-m.md)) |
 | QAT | not needed: INT8 PTQ loses ≤ 0.1 pp |
 | ESP-IDF, FreeRTOS pinning, `esp_timer`, heap caps, custom model partition | done |
 | ESP-DSP / ESP-NN kernels | planned for board bring-up (P10); reference kernels are the differential baseline |
@@ -85,14 +85,14 @@ behind a framework (custom runtime).
 | 4 | PSRAM/flash topology as a design variable | partial — placement logic + boot report + `/bandwidth` for all tiers |
 | 5 | SRAM-only profile | partial — tier S in estimator and sweep (`s-2x96`); firmware already runs without PSRAM (QEMU) |
 | 6 | output head as its own problem | partial — head profiled per token; vocabulary kept at 1024; factorised head planned |
-| 7 | dense Q4 upper boundary | planned |
+| 7 | dense Q4 upper boundary | partial — Q4 format, kernels and a Q4 model shipped; the 1–8 M Q4 capacity sweep is planned |
 | 8 | on-device learning on tiny surfaces | planned |
 | 9 | purpose-built curriculum | **done** — oracle + staged generator + held-out templates + teacher style |
 | 10 | deeper-and-thinner at fixed bytes | **done** — `6x96-deep-thin`, `8x80-deep-thin` in the sweep |
 | 11 | factorised embeddings / layer sharing | planned |
 | 12 | MQA/GQA as an early A/B | **done** — `mqa`, `gqa` in the sweep |
 | 13 | SmoothQuant-style rescaling | not needed yet (W8A8 already within 0.1 pp) |
-| 14 | activation-aware Q4 | planned (with INT4) |
+| 14 | activation-aware Q4 | not needed yet: plain group-wise Q4 already loses nothing measurable |
 | 15 | rotation-based low-bit quantisation | planned |
 | 16 | ternary/BitNet student | planned |
 | 17 | LUT-based low-bit GEMV | planned |

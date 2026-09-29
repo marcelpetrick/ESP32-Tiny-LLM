@@ -122,7 +122,7 @@ static void prof_add(tllm_ctx *ctx, tllm_prof_stage stage, uint64_t start) {
 /* y = W x, using the W8A8 path when the context asks for it and W is int8. */
 static void project(const tllm_ctx *ctx, float *out, const tllm_tensor *w, const float *x, int8_t *qx, float *qscale,
                     int *have_q) {
-    if (w->dtype == TLLM_DTYPE_I8 && ctx->opt.act_mode == TLLM_ACT_I8) {
+    if (w->dtype != TLLM_DTYPE_F32 && ctx->opt.act_mode == TLLM_ACT_I8) {
         if (!*have_q) {
             *qscale = tllm_quantize_vec(qx, x, w->cols);
             *have_q = 1;
@@ -137,6 +137,13 @@ static void embed_row(float *out, const tllm_tensor *t, uint32_t row) {
     const uint32_t d = t->cols;
     if (t->dtype == TLLM_DTYPE_F32) {
         memcpy(out, (const float *)t->data + (size_t)row * d, sizeof(float) * d);
+    } else if (t->dtype == TLLM_DTYPE_Q4) {
+        const uint8_t *p = (const uint8_t *)t->data + (size_t)row * (d / 2u);
+        const uint16_t *s = t->scales16 + (size_t)row * (d / TLLM_Q4_GROUP);
+        for (uint32_t i = 0; i < d; ++i) {
+            int q = (i & 1u) ? (int)(p[i / 2u] >> 4) : (int)(p[i / 2u] & 0x0Fu);
+            out[i] = (float)(q - 8) * tllm_f16_to_f32(s[i / TLLM_Q4_GROUP]);
+        }
     } else {
         const int8_t *q = (const int8_t *)t->data + (size_t)row * d;
         for (uint32_t i = 0; i < d; ++i) out[i] = (float)q[i] * t->scales[row];

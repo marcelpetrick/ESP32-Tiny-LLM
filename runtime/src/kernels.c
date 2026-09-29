@@ -6,6 +6,7 @@
  * ESP32-S3 versions (ESP-DSP / ESP-NN / PIE) must match them (vision §18 O4, §29).
  */
 #include <math.h>
+#include <string.h>
 
 #include "tinyllm/tinyllm.h"
 
@@ -29,8 +30,56 @@ void tllm_softmax(float *x, uint32_t n) {
     for (uint32_t i = 0; i < n; ++i) x[i] *= inv;
 }
 
+float tllm_f16_to_f32(uint16_t h) {
+    uint32_t sign = (uint32_t)(h & 0x8000u) << 16, exp = (h >> 10) & 0x1Fu, mant = h & 0x3FFu, bits;
+    if (exp == 0u) {
+        if (mant == 0u) {
+            bits = sign;
+        } else { /* subnormal: normalise */
+            exp = 127u - 15u + 1u;
+            while ((mant & 0x400u) == 0u) {
+                mant <<= 1;
+                --exp;
+            }
+            bits = sign | (exp << 23) | ((mant & 0x3FFu) << 13);
+        }
+    } else if (exp == 31u) {
+        bits = sign | 0x7F800000u | (mant << 13);
+    } else {
+        bits = sign | ((exp + 127u - 15u) << 23) | (mant << 13);
+    }
+    float f;
+    memcpy(&f, &bits, sizeof f);
+    return f;
+}
+
+/* W4A32: per group of 32, unpack nibbles (value + 8) and scale once per group. */
+static void matvec_q4(float *out, const tllm_tensor *w, const float *x) {
+    const uint32_t groups = w->cols / TLLM_Q4_GROUP;
+    const uint8_t *packed = (const uint8_t *)w->data;
+    for (uint32_t r = 0; r < w->rows; ++r) {
+        const uint8_t *row = packed + (size_t)r * (w->cols / 2u);
+        float acc = 0.0f;
+        for (uint32_t g = 0; g < groups; ++g) {
+            const uint8_t *p = row + g * (TLLM_Q4_GROUP / 2u);
+            const float *xg = x + g * TLLM_Q4_GROUP;
+            float sum = 0.0f;
+            for (uint32_t k = 0; k < TLLM_Q4_GROUP / 2u; ++k) {
+                sum += (float)((int)(p[k] & 0x0Fu) - 8) * xg[2u * k];
+                sum += (float)((int)(p[k] >> 4) - 8) * xg[2u * k + 1u];
+            }
+            acc += sum * tllm_f16_to_f32(w->scales16[(size_t)r * groups + g]);
+        }
+        out[r] = acc;
+    }
+}
+
 void tllm_matvec(float *out, const tllm_tensor *w, const float *x) {
     const uint32_t rows = w->rows, cols = w->cols;
+    if (w->dtype == TLLM_DTYPE_Q4) {
+        matvec_q4(out, w, x);
+        return;
+    }
     if (w->dtype == TLLM_DTYPE_F32) {
         const float *W = (const float *)w->data;
         for (uint32_t r = 0; r < rows; ++r) {
@@ -52,6 +101,26 @@ void tllm_matvec(float *out, const tllm_tensor *w, const float *x) {
 
 void tllm_matvec_q8(float *out, const tllm_tensor *w, const int8_t *qx, float x_scale) {
     const uint32_t rows = w->rows, cols = w->cols;
+    if (w->dtype == TLLM_DTYPE_Q4) { /* W4A8: int32 per group, one float multiply per group */
+        const uint32_t groups = cols / TLLM_Q4_GROUP;
+        const uint8_t *packed = (const uint8_t *)w->data;
+        for (uint32_t r = 0; r < rows; ++r) {
+            const uint8_t *row = packed + (size_t)r * (cols / 2u);
+            float acc = 0.0f;
+            for (uint32_t g = 0; g < groups; ++g) {
+                const uint8_t *p = row + g * (TLLM_Q4_GROUP / 2u);
+                const int8_t *xg = qx + g * TLLM_Q4_GROUP;
+                int32_t sum = 0;
+                for (uint32_t k = 0; k < TLLM_Q4_GROUP / 2u; ++k) {
+                    sum += ((int32_t)(p[k] & 0x0Fu) - 8) * (int32_t)xg[2u * k];
+                    sum += ((int32_t)(p[k] >> 4) - 8) * (int32_t)xg[2u * k + 1u];
+                }
+                acc += (float)sum * tllm_f16_to_f32(w->scales16[(size_t)r * groups + g]);
+            }
+            out[r] = acc * x_scale;
+        }
+        return;
+    }
     const int8_t *Q = (const int8_t *)w->data;
     for (uint32_t r = 0; r < rows; ++r) {
         const int8_t *row = Q + (size_t)r * cols;

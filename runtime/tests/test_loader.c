@@ -71,6 +71,12 @@ static void e_v2_specials(test_blob *b) { put32(b->data + b->tokenizer_offset + 
 static void e_v2_piece_len(test_blob *b) { b->data[b->tokenizer_offset + 20 + 4] = 60; } /* > max_piece_len 6 */
 static void e_v2_truncated(test_blob *b) { put32(b->data + b->tokenizer_offset + 12, 60000); }
 
+static void e_q4_ndim(test_blob *b) { put32(b->data + b->tensor_table_offset + 32, 2); } /* tok_emb cols 16 */
+static void e_q4_scale(test_blob *b) {
+    put32(b->data + b->tensor_table_offset + 32, 2);
+    put32(b->data + b->tensor_table_offset + 60, TEST_N_SPECIAL * 0u + 8u); /* wrong byte count */
+}
+
 void test_loader(void) {
     test_model_spec spec = test_default_spec();
     test_blob b = test_build_model(&spec);
@@ -123,6 +129,8 @@ void test_loader(void) {
     CHECK_EQ_INT(load_edited(e_tensor_ndim, 1), TLLM_ERR_TENSOR);
     CHECK_EQ_INT(load_edited(e_norm_ndim, 1), TLLM_ERR_TENSOR);
 
+    CHECK_EQ_INT(load_edited(e_q4_ndim, 1), TLLM_ERR_TENSOR);
+    CHECK_EQ_INT(load_edited(e_q4_scale, 1), TLLM_ERR_TENSOR);
     g_scored = 1;
     CHECK_EQ_INT(load_edited(e_v2_vocab, 1), TLLM_ERR_TOKENIZER);
     CHECK_EQ_INT(load_edited(e_v2_maxlen, 1), TLLM_ERR_TOKENIZER);

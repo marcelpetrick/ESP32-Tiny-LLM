@@ -13,7 +13,14 @@ import torch
 from training import export
 from training.data.textformat import SPECIAL_TOKENS
 from training.model import Block, ModelConfig, TinyLM
-from training.quantize import dequantize_rows, fake_quantize, quantize_rows
+from training.quantize import (
+    Q4_GROUP,
+    dequantize_q4,
+    dequantize_rows,
+    fake_quantize,
+    quantize_q4,
+    quantize_rows,
+)
 from training.tokenizer import Tokenizer, train_bpe
 
 
@@ -137,3 +144,44 @@ def test_export_cli_from_checkpoint(
     manifest = json.loads(out.with_suffix(".tllm.json").read_text())
     assert manifest["training"]["best_step"] > 0
     assert export.read_tllm(out).weight_dtype == "i8"
+
+
+def test_quantize_q4_round_trip_and_bounds() -> None:
+    rng = np.random.default_rng(1)
+    w = rng.normal(size=(4, 2 * Q4_GROUP)).astype(np.float32)
+    w[1, :Q4_GROUP] = 0.0
+    packed, scales = quantize_q4(w)
+    assert packed.shape == (4, Q4_GROUP)
+    assert scales.dtype == np.float16
+    err = np.abs(dequantize_q4(packed, scales) - w).reshape(4, 2, Q4_GROUP)
+    assert np.all(err <= scales.astype(np.float32)[:, :, None] / 2 + 1e-3)
+    with pytest.raises(ValueError, match="multiple"):
+        quantize_q4(np.zeros((2, 20), dtype=np.float32))
+
+
+def test_q4_export_mixes_q4_and_int8(tmp_path: Path) -> None:
+    tok = train_bpe(["turn on the fan"] * 5, SPECIAL_TOKENS, 300)
+    torch.manual_seed(2)
+    cfg = ModelConfig(
+        vocab_size=tok.vocab_size,
+        ctx_len=16,
+        n_layers=1,
+        d_model=32,
+        n_heads=4,
+        n_kv_heads=4,
+        d_ff=48,
+    )
+    model = TinyLM(cfg).eval()
+    path = tmp_path / "q4.tllm"
+    manifest = export.write_tllm(path, cfg, export.state_arrays(model), tok, "q4")
+    dtypes = {t["name"]: t["dtype"] for t in manifest["tensors"]}  # type: ignore[attr-defined]
+    assert dtypes["l0.wq"] == "q4"
+    assert dtypes["l0.w2"] == "i8"  # 48 columns: not a multiple of 32
+    assert dtypes["pos_emb"] == "f32"
+    parsed = export.read_tllm(path)
+    assert parsed.weight_dtype == "q4"
+    reference = fake_quantize(model, bits=4)
+    idx = torch.tensor([[1, 5, 7, 9]])
+    with torch.no_grad():
+        diff = (export.load_model_from_tllm(parsed)(idx) - reference(idx)).abs().max().item()
+    assert diff < 1e-3

@@ -191,3 +191,27 @@ def test_special_tokens_match_textformat(tmp_path: Path, tokenizer: Tokenizer) -
         runtime.Runtime(tmp_path / "missing.tllm")
     with pytest.raises(runtime.TinyLLMError):
         runtime.device_eval("bogus=1", "fan=1")
+
+
+def test_q4_matches_fake_quant_reference(tmp_path: Path, tokenizer: Tokenizer) -> None:
+    cfg = ModelConfig(
+        vocab_size=tokenizer.vocab_size,
+        ctx_len=64,
+        n_layers=2,
+        d_model=64,
+        n_heads=4,
+        n_kv_heads=2,
+        d_ff=128,
+        pos_type="rope",
+    )
+    path, model = _export(tmp_path, tokenizer, cfg, dtype="q4", seed=6)
+    reference = fake_quantize(model, bits=4)
+    sample = DialogueGenerator(9).sample()
+    ids = tokenizer.encode(prompt_text(sample, history=0))[:60]
+    with torch.no_grad():
+        ref = reference(torch.tensor([ids]))[0, -1].numpy()
+    with runtime.Runtime(path) as rt:
+        np.testing.assert_allclose(np.array(rt.logits(ids)), ref, rtol=1e-3, atol=1e-3)
+        assert rt.command("/model-info")["weights"] == "q4"
+    with runtime.Runtime(path, act_int8=True) as rt:
+        assert np.corrcoef(np.array(rt.logits(ids)), ref)[0, 1] > 0.99

@@ -14,11 +14,11 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 47
+    "Done" : 48
     "In progress" : 0
     "Next (no hardware needed)" : 1
     "Waiting for the ESP32-S3 board" : 6
-    "Planned research" : 14
+    "Planned research" : 13
 ```
 
 ```mermaid
@@ -48,6 +48,7 @@ flowchart LR
 | Experiments | E1–E4 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain |
 | Sweep | 14 variants (vision M8), label-collision-free chart, [Pareto chart](docs/results/sweep.md): RoPE and 2048 vocab are the best levers |
 | Product | web simulator (README screenshots at idle host timings), Docker image on GHCR, firmware with embedded model and board benchmarks |
+| INT4 | Q4 group-wise format + C kernels (W4A32/W4A8), exact Python↔C parity; shipped v3 as 446 KiB Q4 with no quality loss |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
 | Repository page | `/githubAbout`: About text and 10 topics applied, each claim traced to a file |
 | Process | `plan.md` + AGENTS.md rule; `ship.sh` refreshes it on every commit (never stashes it) |
@@ -87,7 +88,7 @@ gantt
 
 ## Planned research (after v1, vision §24–25)
 
-INT4 / activation-aware Q4 · ternary (BitNet) student · LUT-based low-bit GEMV ·
+ternary (BitNet) student · LUT-based low-bit GEMV ·
 per-layer embeddings in flash · factorised embeddings / layer sharing · on-policy
 distillation (E5) · joint tokenizer for a fair language-prior test · chat-lite corpus
 (persona, small talk) · retrieval of device facts · sensor-token encoder · on-device
@@ -100,12 +101,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.8.0` |
-| Updated | 2026-09-28 18:43 UTC |
-| This commit | feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep |
+| Version | `0.9.0` |
+| Updated | 2026-09-29 12:19 UTC |
+| This commit | feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model |
 
 Recent commits:
 
+- `6446702` feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep
 - `200ceac` ci(docker): label the image GPL-3.0-or-later
 - `77728e8` docs: retake README screenshots at idle host timings
 - `bdf2dcb` fix(tools): place sweep chart labels without overlaps
@@ -113,6 +115,5 @@ Recent commits:
 - `c6d8ed9` docs(plan): record the GitHub About text and topics
 - `5867c17` fix(tools): never stash plan.md in ship.sh
 - `f3abae9` docs: add plan.md status with charts and update it on every commit
-- `da0f102` fix(data): include the teacher model in the paraphrase cache key
 
 <!-- ship:end -->

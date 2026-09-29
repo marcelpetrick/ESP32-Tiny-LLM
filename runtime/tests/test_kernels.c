@@ -24,13 +24,13 @@ void test_kernels(void) {
 
     /* f32 and int8 GEMV */
     float W[6] = {1, 2, 3, -1, 0, 1}, v[3] = {1, 1, 2}, y[2];
-    tllm_tensor tf = {W, NULL, TLLM_DTYPE_F32, 2, 3};
+    tllm_tensor tf = {W, NULL, NULL, TLLM_DTYPE_F32, 2, 3};
     tllm_matvec(y, &tf, v);
     CHECK_NEAR(y[0], 9.0, 1e-6);
     CHECK_NEAR(y[1], 1.0, 1e-6);
     int8_t Q[6] = {127, 0, -127, 64, 64, 64};
     float scales[2] = {0.5f, 0.25f};
-    tllm_tensor ti = {Q, scales, TLLM_DTYPE_I8, 2, 3};
+    tllm_tensor ti = {Q, scales, NULL, TLLM_DTYPE_I8, 2, 3};
     tllm_matvec(y, &ti, v);
     CHECK_NEAR(y[0], (127.0 - 254.0) * 0.5, 1e-4);
     CHECK_NEAR(y[1], 256.0 * 0.25, 1e-4);
@@ -49,6 +49,34 @@ void test_kernels(void) {
     float big[2] = {1000.0f, -1000.0f};
     tllm_quantize_vec(qx, big, 2);
     CHECK_EQ_INT(qx[1], -127);
+
+    /* float16 decoding: normal, negative, zero, subnormal, infinity */
+    CHECK_NEAR(tllm_f16_to_f32(0x3C00u), 1.0, 0.0);
+    CHECK_NEAR(tllm_f16_to_f32(0xC000u), -2.0, 0.0);
+    CHECK_NEAR(tllm_f16_to_f32(0x3555u), 0.333251953125, 0.0);
+    CHECK_NEAR(tllm_f16_to_f32(0x0000u), 0.0, 0.0);
+    CHECK_NEAR(tllm_f16_to_f32(0x0001u), 5.960464477539063e-08, 1e-15);
+    CHECK(isinf(tllm_f16_to_f32(0x7C00u)));
+
+    /* Q4: one row of 32 weights, nibble = value + 8, low nibble first, scale 0.5 */
+    uint8_t packed[16];
+    float x32[32], expect = 0.0f;
+    int8_t qx32[32];
+    for (int i = 0; i < 16; ++i) {
+        int lo = (i % 15) - 7, hi = 7 - (i % 15);
+        packed[i] = (uint8_t)((lo + 8) | ((hi + 8) << 4));
+        x32[2 * i] = 0.25f * (float)(i % 5);
+        x32[2 * i + 1] = -0.5f;
+        expect += 0.5f * ((float)lo * x32[2 * i] + (float)hi * x32[2 * i + 1]);
+    }
+    uint16_t half = 0x3800u; /* 0.5 */
+    tllm_tensor tq = {packed, NULL, &half, TLLM_DTYPE_Q4, 1, 32};
+    float yq;
+    tllm_matvec(&yq, &tq, x32);
+    CHECK_NEAR(yq, expect, 1e-4);
+    float sq = tllm_quantize_vec(qx32, x32, 32);
+    tllm_matvec_q8(&yq, &tq, qx32, sq);
+    CHECK_NEAR(yq, expect, 0.05);
 
     /* activations */
     CHECK_NEAR(tllm_gelu(0.0f), 0.0, 1e-7);

@@ -45,7 +45,8 @@ typedef enum {
 
 const char *tllm_status_str(tllm_status status);
 
-typedef enum { TLLM_DTYPE_F32 = 0, TLLM_DTYPE_I8 = 1 } tllm_dtype;
+typedef enum { TLLM_DTYPE_F32 = 0, TLLM_DTYPE_I8 = 1, TLLM_DTYPE_Q4 = 2 } tllm_dtype;
+#define TLLM_Q4_GROUP 32u /* weights per float16 scale in Q4 tensors */
 typedef enum { TLLM_MLP_GELU = 0, TLLM_MLP_SWIGLU = 1 } tllm_mlp_type;
 typedef enum { TLLM_POS_LEARNED = 0, TLLM_POS_ROPE = 1 } tllm_pos_type;
 typedef enum { TLLM_ACT_F32 = 0, TLLM_ACT_I8 = 1 } tllm_act_mode;
@@ -58,8 +59,9 @@ typedef struct {
 
 /* A weight tensor living inside the model blob. */
 typedef struct {
-    const void *data;    /* float32 or int8, row-major [rows, cols] */
-    const float *scales; /* one per row for int8, else NULL */
+    const void *data;         /* float32, int8, or packed 4-bit (two per byte, low nibble first) */
+    const float *scales;      /* int8: one float32 per row, else NULL */
+    const uint16_t *scales16; /* q4: one float16 per TLLM_Q4_GROUP weights of a row, else NULL */
     uint32_t dtype, rows, cols;
 } tllm_tensor;
 
@@ -220,11 +222,12 @@ int32_t tllm_sample(float *logits, uint32_t n, const tllm_sampler_cfg *cfg, tllm
 /* ---------------------------------------------------------------- kernels */
 void tllm_rmsnorm(float *out, const float *x, const float *weight, uint32_t n, float eps);
 void tllm_softmax(float *x, uint32_t n);
-/* out[rows] = W[rows, cols] * x[cols] for f32 or int8 (W8A32) weights */
+/* out[rows] = W[rows, cols] * x[cols] for f32, int8 (W8A32) or q4 (W4A32) weights */
 void tllm_matvec(float *out, const tllm_tensor *w, const float *x);
-/* int8 weights and int8-quantised activations, int32 accumulation (W8A8) */
+/* int8 or q4 weights and int8-quantised activations, int32 accumulation (W8A8 / W4A8) */
 void tllm_matvec_q8(float *out, const tllm_tensor *w, const int8_t *qx, float x_scale);
 float tllm_quantize_vec(int8_t *out, const float *x, uint32_t n); /* returns scale */
+float tllm_f16_to_f32(uint16_t h);
 float tllm_gelu(float x);
 float tllm_silu(float x);
 uint32_t tllm_crc32(const uint8_t *data, size_t len);

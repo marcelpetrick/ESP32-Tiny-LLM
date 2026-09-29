@@ -129,17 +129,25 @@ static tllm_status find_tensor(const table_view *tv, const char *name, uint32_t 
         uint32_t d0 = rd32(e + 40), d1 = rd32(e + 44);
         uint32_t offset = rd32(e + 56), bytes = rd32(e + 60), scale_off = rd32(e + 64);
         uint32_t r = d0, c = ndim == 2u ? d1 : 1u;
-        if (ndim < 1u || ndim > 2u || dtype > TLLM_DTYPE_I8) return TLLM_ERR_TENSOR;
+        if (ndim < 1u || ndim > 2u || dtype > TLLM_DTYPE_Q4) return TLLM_ERR_TENSOR;
         if (r != rows || (cols != 0u && c != cols) || (cols == 0u && ndim != 1u)) return TLLM_ERR_TENSOR;
-        size_t elem = dtype == TLLM_DTYPE_F32 ? 4u : 1u;
-        if ((size_t)r * c * elem != bytes || (size_t)offset + bytes > tv->size || (offset & 3u) != 0u)
-            return TLLM_ERR_TENSOR;
+        if (dtype == TLLM_DTYPE_Q4 && (ndim != 2u || c % TLLM_Q4_GROUP != 0u)) return TLLM_ERR_TENSOR;
+        size_t expect = dtype == TLLM_DTYPE_F32  ? (size_t)r * c * 4u
+                        : dtype == TLLM_DTYPE_I8 ? (size_t)r * c
+                                                 : (size_t)r * c / 2u;
+        if (expect != bytes || (size_t)offset + bytes > tv->size || (offset & 3u) != 0u) return TLLM_ERR_TENSOR;
         out->data = tv->blob + offset;
         out->dtype = dtype;
         out->rows = r;
         out->cols = c;
         out->scales = NULL;
-        if (dtype == TLLM_DTYPE_I8) {
+        out->scales16 = NULL;
+        if (dtype == TLLM_DTYPE_Q4) {
+            size_t groups = (size_t)r * c / TLLM_Q4_GROUP;
+            if (scale_off == NO_SCALE || (scale_off & 1u) != 0u || (size_t)scale_off + 2u * groups > tv->size)
+                return TLLM_ERR_TENSOR;
+            out->scales16 = (const uint16_t *)(const void *)(tv->blob + scale_off);
+        } else if (dtype == TLLM_DTYPE_I8) {
             if (scale_off == NO_SCALE || (scale_off & 3u) != 0u || (size_t)scale_off + 4u * r > tv->size)
                 return TLLM_ERR_TENSOR;
             out->scales = (const float *)(const void *)(tv->blob + scale_off);
@@ -223,7 +231,7 @@ tllm_status tllm_model_load(tllm_model *m, const void *blob_v, size_t size) {
         c->d_ff == 0u || c->d_ff > 4u * TLLM_MAX_DIM || c->ctx_len == 0u || c->ctx_len > TLLM_MAX_CTX ||
         c->vocab_size == 0u || c->vocab_size > TLLM_MAX_VOCAB || c->n_heads == 0u || c->n_kv_heads == 0u ||
         c->d_model % c->n_heads != 0u || c->n_heads % c->n_kv_heads != 0u || c->mlp_type > 1u || c->pos_type > 1u ||
-        c->weight_dtype > 1u || !(c->norm_eps > 0.0f) ||
+        c->weight_dtype > 2u || !(c->norm_eps > 0.0f) ||
         (c->pos_type == TLLM_POS_ROPE && ((c->d_model / c->n_heads) % 2u != 0u || !(c->rope_theta > 0.0f))))
         return TLLM_ERR_UNSUPPORTED;
     if ((size_t)tok_off + tok_size > size || (size_t)table + (size_t)count * ENTRY_SIZE > size)

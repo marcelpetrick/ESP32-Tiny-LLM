@@ -45,6 +45,22 @@ static float max_abs_diff(const float *a, const float *b, uint32_t n) {
     return m;
 }
 
+static double correlation(const float *a, const float *b, uint32_t n) {
+    double ma = 0.0, mb = 0.0, sab = 0.0, saa = 0.0, sbb = 0.0;
+    for (uint32_t i = 0; i < n; ++i) {
+        ma += a[i];
+        mb += b[i];
+    }
+    ma /= n;
+    mb /= n;
+    for (uint32_t i = 0; i < n; ++i) {
+        sab += (a[i] - ma) * (b[i] - mb);
+        saa += (a[i] - ma) * (a[i] - ma);
+        sbb += (b[i] - mb) * (b[i] - mb);
+    }
+    return sab / sqrt(saa * sbb);
+}
+
 static const int32_t SEQ[6] = {1, 20, 40, 60, 80, 100};
 
 /* Logits after running SEQ through a fixture with the given spec/options. */
@@ -113,6 +129,19 @@ void test_transformer(void) {
     tllm_ctx_options a8 = {TLLM_ACT_I8, 0, NULL, NULL};
     run_seq(&q, &a8, seq_logits);
     CHECK(max_abs_diff(ref, seq_logits, V) < 0.1f);
+    /* Q4 weights (32-wide groups need a wider model) stay close to the float reference */
+    test_model_spec wide = spec;
+    wide.d_model = 32;
+    wide.d_ff = 64;
+    float *wide_ref = malloc(sizeof(float) * V);
+    run_seq(&wide, NULL, wide_ref);
+    wide.dtype = 2;
+    run_seq(&wide, NULL, seq_logits);
+    CHECK(correlation(wide_ref, seq_logits, V) > 0.95); /* exact Q4 numerics: Python parity test */
+    CHECK(max_abs_diff(wide_ref, seq_logits, V) > 0.0f);
+    run_seq(&wide, &a8, seq_logits);
+    CHECK(correlation(wide_ref, seq_logits, V) > 0.95);
+    free(wide_ref);
     tllm_ctx_options kv8 = {TLLM_ACT_F32, 1, NULL, NULL};
     run_seq(&spec, &kv8, seq_logits);
     CHECK(max_abs_diff(ref, seq_logits, V) < 0.05f);

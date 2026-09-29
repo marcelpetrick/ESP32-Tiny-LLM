@@ -36,6 +36,25 @@ the device acts on and every action is still validated by the firmware; the regr
 is a target for the next data iteration. The sections below document **v2**
 (4 × 128, learned positions, 1024 tokens), which the experiments are based on.
 
+### INT4 (Q4) variant: `models/greenhouse-m-q4.tllm`
+
+The same v3 checkpoint exported with group-wise 4-bit weights (32 per float16 scale):
+
+| Suite | INT8 (804 KiB) | Q4 (446 KiB) |
+|---|---:|---:|
+| test_id | 99.3 % | 99.3 % |
+| teacher_test | 88.0 % | 88.1 % |
+| heldout | 89.0 % | 89.2 % |
+| robust | 99.2 % | 99.1 % |
+| multiturn | 99.7 % | 99.7 % |
+| safety | 100.0 % | 100.0 % |
+
+**No measurable quality loss for 45 % fewer bytes**; bytes read per token drop from
+0.85 MB to 0.51 MB, raising the estimated decode ceiling from 53 to 89 tok/s (44–80 tok/s
+expected). INT8 stays the default until the board shows whether nibble unpacking costs
+more CPU than it saves in PSRAM traffic (vision §11: "the actual win must be measured
+end-to-end in tokens/sec"). Flash the Q4 file into the model partition to try it.
+
 ## v2 (previous shipped model)
 
 | Property | Value |

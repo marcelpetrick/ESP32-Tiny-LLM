@@ -536,7 +536,10 @@ static void cmd_model_info(tllm_console *con) {
     if (c->pos_type == TLLM_POS_LEARNED) params += (uint64_t)c->ctx_len * c->d_model;
     outf(con, "model %s: %u layers x %u, heads %u/%u, ff %u, vocab %u, ctx %u, %s, %s, %s weights, %llu params\n", id,
          c->n_layers, c->d_model, c->n_heads, c->n_kv_heads, c->d_ff, c->vocab_size, c->ctx_len,
-         c->mlp_type ? "swiglu" : "gelu", c->pos_type ? "rope" : "learned", c->weight_dtype ? "int8" : "fp32",
+         c->mlp_type ? "swiglu" : "gelu", c->pos_type ? "rope" : "learned",
+         c->weight_dtype == 2u ? "q4"
+         : c->weight_dtype     ? "int8"
+                               : "fp32",
          (unsigned long long)params);
     jbuf j = json_begin(con, "model-info");
     jfmt(&j, ",\"model_id\":\"%s\",\"crc32\":\"%08x\",\"bytes\":%lu", id, m->crc32, (unsigned long)m->size);
@@ -546,7 +549,7 @@ static void cmd_model_info(tllm_console *con) {
          (unsigned long long)params);
     jkey_str(&j, "mlp", c->mlp_type ? "swiglu" : "gelu");
     jkey_str(&j, "pos", c->pos_type ? "rope" : "learned");
-    jkey_str(&j, "weights", c->weight_dtype ? "int8" : "fp32");
+    jkey_str(&j, "weights", c->weight_dtype == 2u ? "q4" : c->weight_dtype ? "int8" : "fp32");
     jkey_str(&j, "activations", con->ctx->opt.act_mode == TLLM_ACT_I8 ? "int8" : "fp32");
     jkey_str(&j, "kv_cache", con->ctx->key_i8 != NULL ? "int8" : "fp32");
     json_end(con, &j);

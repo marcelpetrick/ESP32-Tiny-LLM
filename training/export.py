@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from training.config import ModelConfig
-from training.quantize import quantize_rows
+from training.quantize import Q4_GROUP, dequantize_q4, quantize_q4, quantize_rows
 from training.tokenizer import Tokenizer
 from training.tokenizer.llama2c import ScoredTokenizer
 
@@ -47,11 +47,12 @@ ARCH_DECODER = 1
 ALIGN = 16
 DTYPE_F32 = 0
 DTYPE_I8 = 1
+DTYPE_Q4 = 2
 NO_SCALE = 0xFFFFFFFF
 NAME_LEN = 32
 _HEADER = struct.Struct("<4sIII7I4I2I2III16sff")
 _ENTRY = struct.Struct(f"<{NAME_LEN}sII4IIII")
-_DTYPES = {"f32": DTYPE_F32, "i8": DTYPE_I8}
+_DTYPES = {"f32": DTYPE_F32, "i8": DTYPE_I8, "q4": DTYPE_Q4}
 
 
 def _align(buf: bytearray) -> None:
@@ -89,8 +90,13 @@ def state_arrays(model: TinyLM) -> dict[str, np.ndarray]:
     return out
 
 
-def _quantize(name: str, array: np.ndarray, dtype: int) -> bool:
-    return dtype == DTYPE_I8 and array.ndim == 2 and name != "pos_emb"
+def _quantize(name: str, array: np.ndarray, dtype: int) -> int:
+    """Storage dtype of one tensor: norms and positions stay f32; Q4 needs full groups."""
+    if dtype == DTYPE_F32 or array.ndim != 2 or name == "pos_emb":
+        return DTYPE_F32
+    if dtype == DTYPE_Q4 and array.shape[1] % Q4_GROUP == 0:
+        return DTYPE_Q4
+    return DTYPE_I8
 
 
 def write_tllm(
@@ -121,18 +127,24 @@ def write_tllm(
         dims = [*array.shape, 0, 0, 0, 0][:4]
         data_offset = HEADER_SIZE + len(payload)
         scale_offset = NO_SCALE
-        if _quantize(name, array, weight_dtype):
+        tensor_dtype = _quantize(name, array, weight_dtype)
+        if tensor_dtype == DTYPE_Q4:
+            packed, q4_scales = quantize_q4(array)
+            raw = packed.tobytes()
+            payload += raw
+            _align(payload)
+            scale_offset = HEADER_SIZE + len(payload)
+            payload += q4_scales.astype("<f2").tobytes()
+        elif tensor_dtype == DTYPE_I8:
             q, scales = quantize_rows(array)
             raw = q.tobytes()
             payload += raw
             _align(payload)
             scale_offset = HEADER_SIZE + len(payload)
             payload += scales.astype("<f4").tobytes()
-            tensor_dtype = DTYPE_I8
         else:
             raw = array.astype("<f4").tobytes()
             payload += raw
-            tensor_dtype = DTYPE_F32
         _align(payload)
         entries.append(
             _ENTRY.pack(
@@ -148,7 +160,7 @@ def write_tllm(
         manifest_tensors.append(
             {
                 "name": name,
-                "dtype": "i8" if tensor_dtype == DTYPE_I8 else "f32",
+                "dtype": {DTYPE_F32: "f32", DTYPE_I8: "i8", DTYPE_Q4: "q4"}[tensor_dtype],
                 "shape": list(array.shape),
                 "offset": data_offset,
                 "bytes": len(raw),
@@ -257,13 +269,21 @@ def read_tllm(path: Path) -> TllmFile:
         name = name_raw.rstrip(b"\0").decode()
         shape = tuple(dims[:ndim])
         raw = data[offset : offset + size]
-        if tdtype == DTYPE_I8:
+        if tdtype == DTYPE_Q4:
+            packed = np.frombuffer(raw, dtype=np.uint8).reshape(shape[0], shape[1] // 2)
+            groups = shape[0] * shape[1] // Q4_GROUP
+            q4s = np.frombuffer(data, dtype="<f2", count=groups, offset=scale_off).reshape(
+                shape[0], -1
+            )
+            tensors[name] = dequantize_q4(packed, q4s)
+        elif tdtype == DTYPE_I8:
             q = np.frombuffer(raw, dtype=np.int8).reshape(shape)
             scales = np.frombuffer(data, dtype="<f4", count=shape[0], offset=scale_off)
             tensors[name] = q.astype(np.float32) * scales[:, None]
         else:
             tensors[name] = np.frombuffer(raw, dtype="<f4").reshape(shape).copy()
-    return TllmFile(cfg, "i8" if wdtype == DTYPE_I8 else "f32", tokenizer, tensors, model_id, crc)
+    names = {DTYPE_F32: "f32", DTYPE_I8: "i8", DTYPE_Q4: "q4"}
+    return TllmFile(cfg, names[wdtype], tokenizer, tensors, model_id, crc)
 
 
 def load_model_from_tllm(tllm: TllmFile) -> TinyLM:
