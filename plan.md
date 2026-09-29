@@ -104,12 +104,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.9.2` |
-| Updated | 2026-09-29 12:47 UTC |
-| This commit | feat(runtime): retrieve device facts and inject them for facts-enabled models |
+| Version | `0.9.3` |
+| Updated | 2026-09-29 12:56 UTC |
+| This commit | feat(training): mine the student's mistakes for on-policy correction (E5) |
 
 Recent commits:
 
+- `80fad25` feat(runtime): retrieve device facts and inject them for facts-enabled models
 - `5062eb7` feat(firmware): split large GEMVs across both ESP32-S3 cores on demand
 - `f98074f` feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model
 - `6446702` feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep
@@ -117,6 +118,5 @@ Recent commits:
 - `77728e8` docs: retake README screenshots at idle host timings
 - `bdf2dcb` fix(tools): place sweep chart labels without overlaps
 - `4400df9` docs(results): add the architecture sweep and the vision status page
-- `c6d8ed9` docs(plan): record the GitHub About text and topics
 
 <!-- ship:end -->
