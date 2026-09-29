@@ -84,8 +84,8 @@ behind a framework (custom runtime).
 | 3 | dual-core by arithmetic intensity | partial — row-split GEMV executor on both cores with a size threshold (`/parallel N`), verified identical in QEMU; the crossover needs the board |
 | 4 | PSRAM/flash topology as a design variable | partial — placement logic + boot report + `/bandwidth` for all tiers |
 | 5 | SRAM-only profile | partial — tier S in estimator and sweep (`s-2x96`); firmware already runs without PSRAM (QEMU) |
-| 6 | output head as its own problem | partial — head profiled per token; vocabulary kept at 1024; factorised head planned |
-| 7 | dense Q4 upper boundary | partial — Q4 format, kernels and a Q4 model shipped; the 1–8 M Q4 capacity sweep is planned |
+| 6 | output head as its own problem | partial — head profiled per token; vocabulary size measured in the sweep (512/1024/2048: 2048 wins despite the larger head, shipped in v3); factorised head planned |
+| 7 | dense Q4 upper boundary | **done** — Q4 format, kernels, Q4 model shipped; Q4 is lossless at 0.8 M and 2.3 M, but the 2.3 M model is not better, so data, not bytes, bounds this task ([results](results/greenhouse-m.md)) |
 | 8 | on-device learning on tiny surfaces | planned |
 | 9 | purpose-built curriculum | **done** — oracle + staged generator + held-out templates + teacher style |
 | 10 | deeper-and-thinner at fixed bytes | **done** — `6x96-deep-thin`, `8x80-deep-thin` in the sweep |

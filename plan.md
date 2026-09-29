@@ -49,7 +49,7 @@ flowchart LR
 | Sweep | 14 variants (vision M8), label-collision-free chart, [Pareto chart](docs/results/sweep.md): RoPE and 2048 vocab are the best levers |
 | Product | web simulator (README screenshots at idle host timings), Docker image on GHCR, firmware with embedded model and board benchmarks |
 | Dual-core GEMV | row-split executor (core 0 worker), `/parallel N`, identical results in QEMU |
-| INT4 | Q4 group-wise format + C kernels (W4A32/W4A8), exact Python↔C parity; shipped v3 as 446 KiB Q4 with no quality loss |
+| INT4 | Q4 lossless at 0.8 M and 2.3 M params; bigger Q4 model not better (data-bound). Q4 group-wise format + C kernels (W4A32/W4A8), exact Python↔C parity; shipped v3 as 446 KiB Q4 with no quality loss |
 | Retrieval (§24 D) | fact table in Python + C (parity-tested), `<F>` injection; facts model copies unseen facts 99.5 % exact |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
 | Repository page | `/githubAbout`: About text and 10 topics applied, each claim traced to a file |
@@ -68,7 +68,7 @@ gantt
     dateFormat HH:mm
     axisFormat %H:%M
     section Research
-    retrain 4x128 + RoPE + 2048 vocab  :a1, 00:00, 30m
+    chat-lite small talk (§24, "real chat" direction) :a1, 00:00, 60m
     section Release
     final vision check, CI + GHCR pull :a5, after a1, 20m
 ```
@@ -103,12 +103,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.10.1` |
-| Updated | 2026-09-29 16:23 UTC |
-| This commit | feat(docker): offer the facts model in the web simulator |
+| Version | `0.10.2` |
+| Updated | 2026-09-29 16:50 UTC |
+| This commit | docs(results): measure the dense Q4 upper boundary with tier L |
 
 Recent commits:
 
+- `8aaf550` feat(docker): offer the facts model in the web simulator
 - `a9ad2a1` feat(model): ship a facts model that answers from retrieved device facts
 - `ec3588c` docs(results): report on-policy correction (E5); v3 stays the product
 - `cbdff81` feat(training): mine the student's mistakes for on-policy correction (E5)
@@ -116,6 +117,5 @@ Recent commits:
 - `5062eb7` feat(firmware): split large GEMVs across both ESP32-S3 cores on demand
 - `f98074f` feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model
 - `6446702` feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep
-- `200ceac` ci(docker): label the image GPL-3.0-or-later
 
 <!-- ship:end -->

@@ -185,6 +185,26 @@ Same data, 6 × 192 instead of 4 × 128 (3.4 × the parameters, ~3.5 × slower o
 No meaningful gain: for this closed domain the data, not the parameter count, limits
 quality — tier M stays the product.
 
+### Dense Q4 upper boundary (research item 7)
+
+Can Q4 buy a bigger model for the same bytes? Tier L exported as Q4 against tier M as INT8
+(v2 data, 1500 samples per suite, action accuracy / hallucinated actions):
+
+| Suite | M INT8 (0.71 MiB) | L INT8 (2.30 MiB) | L Q4 (1.32 MiB) |
+|---|---:|---:|---:|
+| test_id | 99.3 % / 0.1 % | 99.2 % / 0.1 % | 99.2 % / 0.1 % |
+| teacher_test | **85.3 %** / 6.0 % | 82.3 % / 6.1 % | 82.5 % / 5.9 % |
+| heldout | 88.1 % / 3.5 % | **88.8 %** / 3.5 % | 88.2 % / 3.9 % |
+| robust | 98.5 % / 0.3 % | 98.6 % / 0.5 % | 98.6 % / 0.4 % |
+| multiturn | **99.5 %** / 0.2 % | 99.3 % / 0.1 % | 99.3 % / 0.1 % |
+| safety | 99.6 % / 0.4 % | **99.9 %** / 0.1 % | **99.9 %** / 0.1 % |
+
+Q4 is also lossless at 2.3 M parameters (L Q4 ≈ L INT8 at 57 % of the bytes), so Q4 does
+make a 3× bigger model fit in the bytes of a 1.9× bigger INT8 model. But the bigger model does not answer better, so for this task the
+upper boundary is set by the data, not by bytes: the planned 1–8 M Q4 capacity sweep would
+only measure more of the same and is not pursued. The byte saving is still useful for
+speed (fewer PSRAM bytes per token) — see the Q4 variant of v3 above.
+
 ## What still fails
 
 - *Unseen verbs*: held-out frames such as "kill the fan" use words the model never saw.
