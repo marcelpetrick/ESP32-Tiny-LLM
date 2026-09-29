@@ -200,7 +200,7 @@ Can Q4 buy a bigger model for the same bytes? Tier L exported as Q4 against tier
 | safety | 99.6 % / 0.4 % | **99.9 %** / 0.1 % | **99.9 %** / 0.1 % |
 
 Q4 is also lossless at 2.3 M parameters (L Q4 ≈ L INT8 at 57 % of the bytes), so Q4 does
-make a 3× bigger model fit in the bytes of a 1.9× bigger INT8 model. But the bigger model does not answer better, so for this task the
+make a 3.4× bigger model fit in the bytes of a 1.9× bigger INT8 model. But the bigger model does not answer better, so for this task the
 upper boundary is set by the data, not by bytes: the planned 1–8 M Q4 capacity sweep would
 only measure more of the same and is not pursued. The byte saving is still useful for
 speed (fewer PSRAM bytes per token) — see the Q4 variant of v3 above.
