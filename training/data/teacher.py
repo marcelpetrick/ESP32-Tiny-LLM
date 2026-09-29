@@ -403,7 +403,7 @@ def prompt_for(spec: KeySpec, count: int, examples: list[str]) -> str:
 AskFn = Callable[[str, int], str]
 
 
-def ollama_ask(host: str, model: str) -> AskFn:
+def ollama_ask(host: str, model: str, system: str = SYSTEM) -> AskFn:
     """A function sending one prompt (with seed) to a local Ollama server."""
 
     def ask(prompt: str, seed: int) -> str:
@@ -413,7 +413,7 @@ def ollama_ask(host: str, model: str) -> AskFn:
             "stream": False,
             "options": {"temperature": 0.9, "seed": seed, "num_predict": 700},
             "messages": [
-                {"role": "system", "content": SYSTEM},
+                {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
             ],
         }
@@ -439,9 +439,11 @@ def _examples(spec: KeySpec, rng: random.Random) -> list[str]:
     return out
 
 
-def _ask_cached(ask: AskFn, prompt: str, seed: int, cache: Path | None, model: str) -> str:
+def _ask_cached(
+    ask: AskFn, prompt: str, seed: int, cache: Path | None, model: str, system: str = SYSTEM
+) -> str:
     """Ask once per (teacher model, system prompt, prompt, seed); answers are cached on disk."""
-    digest = hashlib.sha256(f"{model}\n{SYSTEM}\n{prompt}\n{seed}".encode()).hexdigest()[:16]
+    digest = hashlib.sha256(f"{model}\n{system}\n{prompt}\n{seed}".encode()).hexdigest()[:16]
     cached = cache / f"{digest}.txt" if cache else None
     if cached is not None and cached.exists():
         return cached.read_text(encoding="utf-8")

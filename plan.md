@@ -112,12 +112,13 @@ gantt
 
 | Field | Value |
 |---|---|
-| Version | `0.10.3` |
-| Updated | 2026-09-29 17:10 UTC |
-| This commit | docs: refresh plan.md (done, paused chat-lite, what is left) |
+| Version | `0.10.4` |
+| Updated | 2026-09-29 21:25 UTC |
+| This commit | feat(training): generate chat-lite small talk with the local teacher |
 
 Recent commits:
 
+- `33c999e` docs: refresh plan.md (done, paused chat-lite, what is left)
 - `da09b55` docs(results): measure the dense Q4 upper boundary with tier L
 - `8aaf550` feat(docker): offer the facts model in the web simulator
 - `a9ad2a1` feat(model): ship a facts model that answers from retrieved device facts
@@ -125,6 +126,5 @@ Recent commits:
 - `cbdff81` feat(training): mine the student's mistakes for on-policy correction (E5)
 - `80fad25` feat(runtime): retrieve device facts and inject them for facts-enabled models
 - `5062eb7` feat(firmware): split large GEMVs across both ESP32-S3 cores on demand
-- `f98074f` feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model
 
 <!-- ship:end -->

@@ -58,6 +58,7 @@ class Turn:
     op: str | None = None  # operation applied (for ellipsis "and the heater")
     before: int | None = None  # device value before the turn (for corrections)
     tags: frozenset[str] = field(default_factory=frozenset)
+    alternatives: tuple[str, ...] = ()  # other equally correct replies (small talk)
 
 
 @dataclass(frozen=True)
@@ -169,6 +170,21 @@ def synthetic_fact(rng: random.Random) -> tuple[str, str]:
         cut = rng.randint(2, len(words) - 1)
         text = " ".join(words[:cut]) + ", " + " ".join(words[cut:])
     return text + ".", thing
+
+
+@dataclass(frozen=True)
+class SmallTalk:
+    """User phrasings and interchangeable persona replies of one small-talk topic."""
+
+    users: tuple[str, ...]
+    replies: tuple[str, ...]  # may contain {t} {h} {soil} (filled from the state)
+
+
+def render_reply(template: str, state: DeviceState) -> str:
+    """Fill a grounded reply template from the state (numbers formatted like the state block)."""
+    t = "na" if state.t is None else f"{state.t:.1f}"
+    h = "na" if state.h is None else str(state.h)
+    return template.format(t=t, h=h, soil=state.soil)
 
 
 class GenerationError(RuntimeError):
@@ -373,6 +389,8 @@ class DialogueGenerator:
         p_teacher: float = 0.0,
         typo_p: float = 0.0,
         facts: str = "off",
+        smalltalk: Mapping[str, SmallTalk] | None = None,
+        p_smalltalk: float = 0.0,
     ) -> None:
         self.rng = random.Random(seed)
         self.heldout = heldout
@@ -383,6 +401,9 @@ class DialogueGenerator:
         # "off": no retrieval; "train": table facts (not held out) + synthetic facts;
         # "heldout": every final turn asks about a held-out table fact
         self.facts = facts
+        # chat-lite (docs/03 §2): persona small talk, topic -> user lines + replies
+        self.smalltalk = dict(smalltalk or {})
+        self.p_smalltalk = p_smalltalk
 
     # -- helpers --------------------------------------------------------------------
     def frame(self, intent: str) -> str:
@@ -784,11 +805,29 @@ class DialogueGenerator:
         ):
             question, text = self.fact_turn()
             return Sample(tuple(history), state, question, text)
+        if self.smalltalk and not want_reference and rng.random() < self.p_smalltalk:
+            return Sample(tuple(history), state, self.smalltalk_turn(state))
         final = self.checked(state, self.make_turn(intent, state, prev))
         fact = retrieve(final.user) if self.facts != "off" else None
         if fact is not None and fact.heldout and self.facts == "train":
             fact = None  # never show held-out facts during training
         return Sample(tuple(history), state, final, fact.text if fact else None)
+
+    def smalltalk_turn(self, state: DeviceState) -> Turn:
+        """A persona small-talk exchange; every reply of the topic is correct."""
+        rng = self.rng
+        name = rng.choice(sorted(self.smalltalk))
+        topic = self.smalltalk[name]
+        replies = tuple(render_reply(r, state) for r in topic.replies)
+        user = self.decorate(rng.choice(topic.users))
+        return Turn(
+            user,
+            rng.choice(replies),
+            None,
+            "smalltalk",
+            tags=frozenset({"smalltalk", f"topic:{name}"}),
+            alternatives=replies,
+        )
 
     def fact_turn(self) -> tuple[Turn, str]:
         """A question answered by copying the injected fact (table or synthetic)."""

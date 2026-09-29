@@ -92,3 +92,12 @@ def test_score_counts_metrics() -> None:
     table = ev.markdown({"x": result}, "title")
     assert "| x | 2 |" in table
     assert ev.SuiteResult().rate("action_exact") == 0.0
+
+
+def test_small_talk_accepts_any_reply_of_the_topic() -> None:
+    result = ev.SuiteResult()
+    record = {**_record(None, "i am fine.", "smalltalk"), "allowed": ["i am fine.", "all good."]}
+    ev.score(record, ev.parse_output(" all good.</A><eos>", False), result)
+    ev.score(record, ev.parse_output(" i like cats.</A><eos>", False), result)
+    assert result.counts["reply_exact"] == 1
+    assert result.counts["numbers_grounded"] == 2

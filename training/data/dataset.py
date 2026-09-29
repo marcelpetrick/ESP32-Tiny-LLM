@@ -35,6 +35,7 @@ from typing import Any
 from training import project_version
 from training.data.dialogue import DialogueGenerator, Sample
 from training.data.noise import add_typos
+from training.data.smalltalk import load as load_smalltalk
 from training.data.textformat import FACT_TOKENS, SPECIAL_TOKENS, prompt_text, target_text
 from training.tokenizer import Tokenizer, train_bpe
 
@@ -60,17 +61,25 @@ class SplitSpec:
     p_teacher: float = 0.0
     typo_p: float = 0.0
     facts: str = "off"  # retrieval (vision §24 D): "off", "train" or "heldout" facts
+    smalltalk_part: str | None = None  # chat-lite: "train" or "test" small-talk phrasings
+    p_smalltalk: float = 0.0
 
 
 def _is_safety(sample: Sample) -> bool:
     return bool({"safety", "clarify"} & sample.turn.tags)
 
 
-def default_splits(scale: float = 1.0, facts: bool = False) -> list[SplitSpec]:
+def _is_smalltalk(sample: Sample) -> bool:
+    return sample.turn.intent == "smalltalk"
+
+
+def default_splits(scale: float = 1.0, facts: bool = False, chat: bool = False) -> list[SplitSpec]:
     """The standard split set; ``scale`` multiplies all sizes (tests use tiny scales).
 
     With ``facts`` every split injects retrieved facts and a ``facts_heldout`` split asks
     only about facts that never occur in training (answering from unseen injected text).
+    With ``chat`` the train/val/test_id splits mix in persona small talk and a
+    ``smalltalk_test`` split uses only the held-back small-talk phrasings.
     """
 
     def n(size: int) -> int:
@@ -86,6 +95,22 @@ def default_splits(scale: float = 1.0, facts: bool = False) -> list[SplitSpec]:
         SplitSpec("multiturn", n(2_000), 6, force_reference=True),
         SplitSpec("safety", n(2_000), 7, keep=_is_safety),
     ]
+    if chat:
+        specs = [
+            replace(spec, smalltalk_part="train", p_smalltalk=0.12)
+            if spec.name in ("train", "val", "test_id")
+            else spec
+            for spec in specs
+        ] + [
+            SplitSpec(
+                "smalltalk_test",
+                n(1_000),
+                10,
+                keep=_is_smalltalk,
+                smalltalk_part="test",
+                p_smalltalk=1.0,
+            )
+        ]
     if not facts:
         return specs
     return [replace(spec, facts="train") for spec in specs] + [
@@ -101,7 +126,11 @@ def load_teacher(path: Path | None) -> dict[str, Any]:
     return data
 
 
-def generate(spec: SplitSpec, teacher: dict[str, Any] | None = None) -> list[Sample]:
+def generate(
+    spec: SplitSpec,
+    teacher: dict[str, Any] | None = None,
+    smalltalk_path: Path | None = None,
+) -> list[Sample]:
     """Generate the samples of one split."""
     bank = {}
     if spec.teacher_part is not None and teacher is not None:
@@ -114,6 +143,10 @@ def generate(spec: SplitSpec, teacher: dict[str, Any] | None = None) -> list[Sam
         p_teacher=spec.p_teacher,
         typo_p=spec.typo_p,
         facts=spec.facts,
+        smalltalk=load_smalltalk(smalltalk_path, spec.smalltalk_part)
+        if smalltalk_path is not None and spec.smalltalk_part is not None
+        else None,
+        p_smalltalk=spec.p_smalltalk,
     )
     typo_rng = random.Random(spec.seed * 7919)
     out: list[Sample] = []
@@ -160,6 +193,7 @@ def encode_sample(tok: Tokenizer, sample: Sample, ctx: int) -> dict[str, object]
                 "action": sample.turn.action,
                 "reply": sample.turn.reply,
                 "history_kept": keep,
+                **({"allowed": list(sample.turn.alternatives)} if sample.turn.alternatives else {}),
             }
     return None
 
@@ -176,6 +210,7 @@ def build(
     teacher_path: Path | None = None,
     tokenizer_path: Path | None = None,
     facts: bool = False,
+    smalltalk_path: Path | None = None,
 ) -> dict[str, object]:
     """Generate all splits, train (or reuse) the tokenizer, write JSONL + manifest.
 
@@ -183,11 +218,11 @@ def build(
     different data variants can be evaluated on identical token sequences.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
-    specs = default_splits(scale, facts)
+    specs = default_splits(scale, facts, chat=smalltalk_path is not None)
     teacher = load_teacher(teacher_path)
     if not teacher["paraphrases"]:
         specs = [spec for spec in specs if spec.name != "teacher_test"]
-    samples = {spec.name: generate(spec, teacher) for spec in specs}
+    samples = {spec.name: generate(spec, teacher, smalltalk_path) for spec in specs}
     if tokenizer_path is not None:
         tok = Tokenizer.load(tokenizer_path)
         if facts and not set(FACT_TOKENS) <= set(tok.specials):
@@ -231,6 +266,7 @@ def build(
         else None,
         "ctx": ctx,
         "facts": facts,
+        "smalltalk_sha256": _sha256(smalltalk_path) if smalltalk_path is not None else None,
         "vocab_size": tok.vocab_size,
         "splits": {
             spec.name: {
@@ -265,9 +301,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--tokenizer", type=Path, default=None, help="reuse this tokenizer.json")
     parser.add_argument("--facts", action="store_true", help="inject retrieved device facts")
+    parser.add_argument(
+        "--chat", type=Path, default=None, help="small-talk bank (training.data.smalltalk)"
+    )
     args = parser.parse_args(argv)
     manifest = build(
-        args.out, args.scale, args.ctx, args.vocab, args.teacher, args.tokenizer, args.facts
+        args.out,
+        args.scale,
+        args.ctx,
+        args.vocab,
+        args.teacher,
+        args.tokenizer,
+        args.facts,
+        args.chat,
     )
     print(json.dumps(manifest["splits"], indent=2))
     print(f"vocab_size={manifest['vocab_size']}")

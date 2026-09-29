@@ -94,6 +94,18 @@ flowchart TB
 The distillation side (which teachers, which losses, which licences) is in
 [04-distillation.md](04-distillation.md).
 
+### Implementation (small-talk data)
+
+`training/data/smalltalk.py` builds the persona part (D4 above) with the same local teacher
+as the device paraphrases: for 20 topics (how are you, name, robot or human, feelings,
+sad or tired user, compliments, insults, goodbye, …) the teacher writes user phrasings and
+persona replies in simple English. Filters drop device commands, fact keywords, digits
+and lines that collide with existing intents. User phrasings are split 80/20; the held-back
+20 % form the `smalltalk_test` suite. Replies of a topic are interchangeable, so the
+evaluation accepts any of them. Two topics ("what are you doing", "how is it in there")
+answer from the state block through code templates, so their numbers are always true.
+Build a chat dataset with `python -m training.data.dataset … --chat data/teacher/smalltalk.json`.
+
 ## 5. Recommendation
 
 1. **Ship the core product first** (tier M2 device assistant). It is the part that can be

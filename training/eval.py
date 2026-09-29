@@ -156,8 +156,9 @@ def score(record: dict[str, Any], pred: Prediction, result: SuiteResult) -> None
         "hallucinated_action": exp_action is None and pred.action is not None,
         "length_violation": pred.hit_limit,
     }
-    ok["reply_exact"] = pred.reply == _expected_reply(record["reply"]) and not pred.malformed
-    numbers = _NUMBER.findall(record["reply"])
+    allowed = record.get("allowed") or [_expected_reply(record["reply"])]
+    ok["reply_exact"] = pred.reply in allowed and not pred.malformed  # small talk: any valid reply
+    numbers = [] if record.get("allowed") else _NUMBER.findall(record["reply"])
     ok["numbers_grounded"] = all(n in pred.reply for n in numbers)
     state_text = record["prompt"][
         record["prompt"].rindex("<S>") : record["prompt"].rindex("</S>") + 4
