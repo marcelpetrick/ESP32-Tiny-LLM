@@ -26,8 +26,9 @@ docker run --rm -i -u "$(id -u):$(id -g)" -e HOME=/tmp -v "${REPO_ROOT}:/project
     bash -c '. "$IDF_PATH/export.sh" >/dev/null 2>&1
         esptool.py --chip esp32s3 merge_bin --fill-flash-size 16MB -o /tmp/flash.bin @flash_args >/dev/null
         ( sleep 12; printf "/model-info\r"; sleep 6; printf "what is the temperature?\r"; sleep 20;
-          printf "/tokenize turn on the fan, t=31.2 please!\r"; sleep 5 ) |
-            timeout 60 qemu-system-xtensa -nographic -machine esp32s3 -m 4M \
+          printf "/tokenize turn on the fan, t=31.2 please!\r"; sleep 5;
+          printf "/parallel 1\r"; sleep 2; printf "what is the temperature?\r"; sleep 20 ) |
+            timeout 90 qemu-system-xtensa -nographic -machine esp32s3 -m 4M \
                 -drive file=/tmp/flash.bin,if=mtd,format=raw 2>&1 || true' | tee "${log_file}" >/dev/null
 grep -q '@@{"event":"boot"' "${log_file}" || die "firmware did not boot (see ${log_file})"
 grep -q '@@{"event":"model-info"' "${log_file}" || die "no /model-info answer (see ${log_file})"
@@ -38,4 +39,8 @@ host_ids="$("${REPO_ROOT}/build/runtime-release/tinyllm-cli" "${REPO_ROOT}/model
     -c "/tokenize ${fixture}" | grep '@@{"event":"tokens"' | tr -d '\r')"
 chip_ids="$(grep -a '@@{"event":"tokens"' "${log_file}" | head -n1 | tr -d '\r')"
 [[ -n "${host_ids}" && "${host_ids}" == "${chip_ids}" ]] || die "tokenizer differs: host ${host_ids} vs chip ${chip_ids}"
-log "firmware boots in QEMU, answers over the serial console, tokenizes like the host (${log_file})"
+# dual-core GEMV: the same question must give the same reply with both cores working
+replies="$(grep -a '@@{"event":"reply"' "${log_file}" | sed 's/"prompt_tokens.*//' | sort -u | wc -l)"
+grep -q 'parallel gemv on' "${log_file}" || die "/parallel was not accepted"
+[[ "${replies}" -eq 1 ]] || die "dual-core reply differs from single-core reply"
+log "firmware boots in QEMU, answers over serial, tokenizes like the host, dual-core GEMV agrees (${log_file})"

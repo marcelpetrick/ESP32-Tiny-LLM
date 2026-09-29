@@ -45,6 +45,15 @@ static int platform_cmd(tllm_console *con, const char *line) {
     return 1;
 }
 
+static int g_split_calls;
+/* Test executor: runs the two halves one after the other (the firmware runs them on two cores). */
+static void split_two(void *user, tllm_job_fn job, void *arg, uint32_t n) {
+    (void)user;
+    ++g_split_calls;
+    job(arg, 0, n / 2u);
+    job(arg, n / 2u, n);
+}
+
 static int g_yields;
 static void count_yield(void) { ++g_yields; }
 
@@ -76,7 +85,7 @@ static void setup(cfix *f, uint32_t ctx_len) {
     size_t hs = tllm_hot_arena_size(&f->model), cs = tllm_cold_arena_size(&f->model, 0);
     f->hot = malloc(hs);
     f->cold = malloc(cs);
-    tllm_ctx_options opt = {TLLM_ACT_F32, 0, tick, count_yield};
+    tllm_ctx_options opt = {TLLM_ACT_F32, 0, tick, count_yield, split_two, NULL, 0};
     CHECK_EQ_INT(tllm_ctx_init(&f->ctx, &f->model, &opt, f->hot, hs, f->cold, cs), TLLM_OK);
     CHECK_EQ_INT(tllm_console_init(&f->con, &f->ctx, capture, f), TLLM_OK);
     f->con.memory = mem_report;
@@ -221,6 +230,19 @@ void test_console(void) {
     CHECK_CONTAINS(run(f, "/benchmark nope"), "unknown benchmark");
     CHECK_CONTAINS(run(f, "/frobnicate"), "unknown command");
     CHECK_CONTAINS(run(f, "/bandwidth"), "bandwidth ok");
+    /* row-split GEMV gives identical results to the single-core path */
+    run(f, "/kv-reset");
+    const int32_t split_script[] = {B(' '), B('o'), B('k'), A_CLOSE, EOS};
+    scripted(f, "split", split_script, 5);
+    char single[256];
+    snprintf(single, sizeof single, "%s", tllm_console_last_json(&f->con));
+    CHECK_CONTAINS(run(f, "/parallel 1"), "parallel gemv on");
+    run(f, "/kv-reset");
+    scripted(f, "split", split_script, 5);
+    CHECK(g_split_calls > 0);
+    CHECK(strncmp(single, tllm_console_last_json(&f->con), 60) == 0);
+    CHECK_CONTAINS(run(f, "/parallel 0"), "parallel gemv off");
+    CHECK_CONTAINS(run(f, "/parallel x"), "usage: /parallel");
     CHECK_CONTAINS(run(f, "/tokenize the fan=2"), "\"event\":\"tokens\",\"ids\":[");
     CHECK_CONTAINS(f->out, "\"round_trip\":true");
     CHECK(g_yields > 0);
@@ -289,6 +311,7 @@ void test_console(void) {
     CHECK(json_int(tllm_console_last_json(&f->con), "gen_tokens") <= 5);
     CHECK_CONTAINS(run(f, "/help"), "story prompt");
     CHECK_CONTAINS(run(f, "/benchmark chat"), "\"event\":\"benchmark\"");
+    CHECK_CONTAINS(run(f, "/parallel 5"), "no parallel executor");   /* story ctx has no executor */
     CHECK_CONTAINS(run(f, "/tokenize ab c"), "\"round_trip\":true"); /* dummy prefix handled */
     char big[TLLM_CONSOLE_LINE_MAX + 20];
     memset(big, 'x', sizeof big - 1u);

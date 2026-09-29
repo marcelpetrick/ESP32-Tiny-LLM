@@ -81,7 +81,7 @@ behind a framework (custom runtime).
 |---|---|---|
 | 1 | llama2.c as permanent oracle | **done** — vendored `run.c` built in tests; identical greedy stories |
 | 2 | bytes-per-token roofline | **done** — `tools/estimate.py`, feasibility doc; measured bandwidth via `/bandwidth` on the board |
-| 3 | dual-core by arithmetic intensity | planned (P10) — needs measurement |
+| 3 | dual-core by arithmetic intensity | partial — row-split GEMV executor on both cores with a size threshold (`/parallel N`), verified identical in QEMU; the crossover needs the board |
 | 4 | PSRAM/flash topology as a design variable | partial — placement logic + boot report + `/bandwidth` for all tiers |
 | 5 | SRAM-only profile | partial — tier S in estimator and sweep (`s-2x96`); firmware already runs without PSRAM (QEMU) |
 | 6 | output head as its own problem | partial — head profiled per token; vocabulary kept at 1024; factorised head planned |

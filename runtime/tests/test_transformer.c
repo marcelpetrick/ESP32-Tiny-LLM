@@ -126,7 +126,7 @@ void test_transformer(void) {
     q.dtype = 1;
     run_seq(&q, NULL, seq_logits);
     CHECK(max_abs_diff(ref, seq_logits, V) < 0.05f);
-    tllm_ctx_options a8 = {TLLM_ACT_I8, 0, NULL, NULL};
+    tllm_ctx_options a8 = {TLLM_ACT_I8, 0, NULL, NULL, NULL, NULL, 0};
     run_seq(&q, &a8, seq_logits);
     CHECK(max_abs_diff(ref, seq_logits, V) < 0.1f);
     /* Q4 weights (32-wide groups need a wider model) stay close to the float reference */
@@ -142,7 +142,7 @@ void test_transformer(void) {
     run_seq(&wide, &a8, seq_logits);
     CHECK(correlation(wide_ref, seq_logits, V) > 0.95);
     free(wide_ref);
-    tllm_ctx_options kv8 = {TLLM_ACT_F32, 1, NULL, NULL};
+    tllm_ctx_options kv8 = {TLLM_ACT_F32, 1, NULL, NULL, NULL, NULL, 0};
     run_seq(&spec, &kv8, seq_logits);
     CHECK(max_abs_diff(ref, seq_logits, V) < 0.05f);
     CHECK(max_abs_diff(ref, seq_logits, V) > 0.0f);
@@ -154,7 +154,7 @@ void test_transformer(void) {
     r.n_kv_heads = 1;
     r.n_layers = 11; /* two-digit layer names */
     r.ctx_len = 16;
-    tllm_ctx_options prof = {TLLM_ACT_F32, 0, fake_clock, NULL};
+    tllm_ctx_options prof = {TLLM_ACT_F32, 0, fake_clock, NULL, NULL, NULL, 0};
     CHECK_EQ_INT(setup(&f, &r, &prof), 0);
     f.ctx.profiling = 1;
     CHECK_EQ_INT(tllm_forward(&f.ctx, 31, &logits), TLLM_OK);

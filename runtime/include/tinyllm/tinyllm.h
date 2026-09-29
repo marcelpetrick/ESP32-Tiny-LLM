@@ -131,12 +131,21 @@ typedef uint64_t (*tllm_clock_fn)(void);
 /* Called once after every forward step; firmware uses it to yield to lower-priority
  * tasks (task watchdog) without the runtime knowing about FreeRTOS. */
 typedef void (*tllm_yield_fn)(void);
+/* Optional multi-core GEMV (research item 3): the executor must call job(arg, begin, end)
+ * for disjoint row ranges covering [0, n) — e.g. half on each ESP32-S3 core — and return
+ * when all have finished. The runtime only uses it for matrices with at least
+ * parallel_min_macs multiply-accumulates, so memory-bound small GEMVs stay single-core. */
+typedef void (*tllm_job_fn)(void *arg, uint32_t begin, uint32_t end);
+typedef void (*tllm_parallel_fn)(void *user, tllm_job_fn job, void *arg, uint32_t n);
 
 typedef struct {
-    tllm_act_mode act_mode; /* int8 weights: TLLM_ACT_F32 (W8A32) or TLLM_ACT_I8 (W8A8) */
-    int kv_int8;            /* 1: int8 KV cache with per-row scales, 0: float32 */
-    tllm_clock_fn clock;    /* microsecond clock for profiling, may be NULL */
-    tllm_yield_fn yield;    /* optional per-token scheduling hook, may be NULL */
+    tllm_act_mode act_mode;     /* int8 weights: TLLM_ACT_F32 (W8A32) or TLLM_ACT_I8 (W8A8) */
+    int kv_int8;                /* 1: int8 KV cache with per-row scales, 0: float32 */
+    tllm_clock_fn clock;        /* microsecond clock for profiling, may be NULL */
+    tllm_yield_fn yield;        /* optional per-token scheduling hook, may be NULL */
+    tllm_parallel_fn parallel;  /* optional row-splitting executor, may be NULL */
+    void *parallel_user;        /* passed to parallel */
+    uint32_t parallel_min_macs; /* 0: never split */
 } tllm_ctx_options;
 
 typedef struct {
@@ -224,6 +233,8 @@ void tllm_rmsnorm(float *out, const float *x, const float *weight, uint32_t n, f
 void tllm_softmax(float *x, uint32_t n);
 /* out[rows] = W[rows, cols] * x[cols] for f32, int8 (W8A32) or q4 (W4A32) weights */
 void tllm_matvec(float *out, const tllm_tensor *w, const float *x);
+/* Rows [begin, end) of a weight tensor as a zero-copy tensor view. */
+tllm_tensor tllm_tensor_rows(const tllm_tensor *w, uint32_t begin, uint32_t end);
 /* int8 or q4 weights and int8-quantised activations, int32 accumulation (W8A8 / W4A8) */
 void tllm_matvec_q8(float *out, const tllm_tensor *w, const int8_t *qx, float x_scale);
 float tllm_quantize_vec(int8_t *out, const float *x, uint32_t n); /* returns scale */

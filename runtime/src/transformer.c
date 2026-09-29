@@ -119,18 +119,42 @@ static void prof_add(tllm_ctx *ctx, tllm_prof_stage stage, uint64_t start) {
     if (ctx->profiling && ctx->opt.clock != NULL) ctx->prof_us[stage] += ctx->opt.clock() - start;
 }
 
+typedef struct {
+    float *out;
+    const tllm_tensor *w;
+    const float *x;
+    const int8_t *qx;
+    float qscale;
+    int use_q8;
+} gemv_job;
+
+/* signature fixed by tllm_job_fn, so arg cannot be const */
+// cppcheck-suppress constParameterCallback
+static void gemv_rows(void *arg, uint32_t begin, uint32_t end) {
+    const gemv_job *job = (const gemv_job *)arg;
+    tllm_tensor view = tllm_tensor_rows(job->w, begin, end);
+    if (job->use_q8)
+        tllm_matvec_q8(job->out + begin, &view, job->qx, job->qscale);
+    else
+        tllm_matvec(job->out + begin, &view, job->x);
+}
+
 /* y = W x, using the W8A8 path when the context asks for it and W is int8. */
 static void project(const tllm_ctx *ctx, float *out, const tllm_tensor *w, const float *x, int8_t *qx, float *qscale,
                     int *have_q) {
-    if (w->dtype != TLLM_DTYPE_F32 && ctx->opt.act_mode == TLLM_ACT_I8) {
+    gemv_job job = {out, w, x, qx, 0.0f, w->dtype != TLLM_DTYPE_F32 && ctx->opt.act_mode == TLLM_ACT_I8};
+    if (job.use_q8) {
         if (!*have_q) {
             *qscale = tllm_quantize_vec(qx, x, w->cols);
             *have_q = 1;
         }
-        tllm_matvec_q8(out, w, qx, *qscale);
-    } else {
-        tllm_matvec(out, w, x);
+        job.qscale = *qscale;
     }
+    const uint64_t macs = (uint64_t)w->rows * w->cols;
+    if (ctx->opt.parallel != NULL && ctx->opt.parallel_min_macs != 0u && macs >= ctx->opt.parallel_min_macs)
+        ctx->opt.parallel(ctx->opt.parallel_user, gemv_rows, &job, w->rows);
+    else
+        gemv_rows(&job, 0, w->rows);
 }
 
 static void embed_row(float *out, const tllm_tensor *t, uint32_t row) {

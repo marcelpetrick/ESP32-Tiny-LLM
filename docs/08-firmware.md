@@ -78,6 +78,7 @@ commands, every response ends with an `@@{json}` line. Board-only commands:
 | `/gemv` | GEMV throughput of the first MLP matrix (MMAC/s) with float and int8 activations |
 | `/memory` | arena sizes plus live `heap_caps` statistics (internal/PSRAM free and minimum) |
 | `/benchmark <case>` | prefill/decode tok/s, first-token latency, mean/p95 token latency, stage profile |
+| `/parallel N` | split every GEMV with ≥ N multiply-accumulates across both cores (0 = off, the default); benchmark with several N to find the crossover (research item 3) |
 
 ## 4. Hardware-in-the-loop benchmark
 
@@ -98,11 +99,14 @@ as a dry run).
 2. `/bandwidth` → replace the 45 MB/s estimate in [01-feasibility.md](01-feasibility.md)
    with the measured PSRAM figure; `/gemv` → measured MAC rate.
 3. Run the serial runner; commit `docs/results/benchmark-esp32s3.md` (measured).
-4. Compare decode tok/s with the estimate (shipped model = tier M2: 26–48 tok/s); if far below, profile
+4. Find the dual-core crossover: `/benchmark diagnose` with `/parallel 0`, then with
+   `/parallel 131072` (FFN + head only), `/parallel 16384` (all layer matrices); keep the
+   fastest setting as the default in `app_main.c`.
+5. Compare decode tok/s with the estimate (shipped model = tier M2: 26–48 tok/s); if far below, profile
    with `/profile on` and optimise the dominant stage first (vision §18 O4–O8: ESP-DSP /
    ESP-NN dot products, PIE INT8 GEMV, dual-core only where it measurably wins).
-5. Try `CONFIG_SPIRAM_SPEED_120M` where the module supports it (research item 20).
-6. Add the HIL job to CI with a self-hosted runner attached to the board (20 % regression
+6. Try `CONFIG_SPIRAM_SPEED_120M` where the module supports it (research item 20).
+7. Add the HIL job to CI with a self-hosted runner attached to the board (20 % regression
    threshold, vision §29).
 
 ## 6. QEMU caveats

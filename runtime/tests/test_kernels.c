@@ -35,6 +35,14 @@ void test_kernels(void) {
     CHECK_NEAR(y[0], (127.0 - 254.0) * 0.5, 1e-4);
     CHECK_NEAR(y[1], 256.0 * 0.25, 1e-4);
 
+    /* zero-copy row views for every dtype */
+    tllm_tensor rv = tllm_tensor_rows(&ti, 1, 2);
+    tllm_matvec(y, &rv, v);
+    CHECK_NEAR(y[0], 256.0 * 0.25, 1e-4);
+    rv = tllm_tensor_rows(&tf, 1, 2);
+    tllm_matvec(y, &rv, v);
+    CHECK_NEAR(y[0], 1.0, 1e-6);
+
     /* activation quantisation and W8A8 */
     int8_t qx[3];
     float sx = tllm_quantize_vec(qx, v, 3);
@@ -73,6 +81,9 @@ void test_kernels(void) {
     tllm_tensor tq = {packed, NULL, &half, TLLM_DTYPE_Q4, 1, 32};
     float yq;
     tllm_matvec(&yq, &tq, x32);
+    CHECK_NEAR(yq, expect, 1e-4);
+    tllm_tensor tq_view = tllm_tensor_rows(&tq, 0, 1);
+    tllm_matvec(&yq, &tq_view, x32);
     CHECK_NEAR(yq, expect, 1e-4);
     float sq = tllm_quantize_vec(qx32, x32, 32);
     tllm_matvec_q8(&yq, &tq, qx32, sq);

@@ -26,6 +26,7 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "sdkconfig.h"
 #include "tinyllm/console.h"
@@ -52,6 +53,35 @@ static void yield_hook(void) {
         vTaskDelay(1);
         last = esp_timer_get_time();
     }
+}
+
+/* ---- dual-core GEMV (research item 3): core 0 takes the second half of the rows ---- */
+static SemaphoreHandle_t s_work_ready, s_work_done;
+static struct {
+    tllm_job_fn job;
+    void *arg;
+    uint32_t begin, end;
+} s_work;
+
+static void gemv_worker(void *arg) {
+    (void)arg;
+    for (;;) {
+        xSemaphoreTake(s_work_ready, portMAX_DELAY);
+        s_work.job(s_work.arg, s_work.begin, s_work.end);
+        xSemaphoreGive(s_work_done);
+    }
+}
+
+static void dual_core(void *user, tllm_job_fn job, void *arg, uint32_t n) {
+    (void)user;
+    const uint32_t half = n / 2u;
+    s_work.job = job;
+    s_work.arg = arg;
+    s_work.begin = half;
+    s_work.end = n;
+    xSemaphoreGive(s_work_ready);
+    job(arg, 0, half);
+    xSemaphoreTake(s_work_done, portMAX_DELAY);
 }
 
 static void write_out(void *user, const char *text, size_t len) {
@@ -185,7 +215,11 @@ void app_main(void) {
     void *cold_mem = alloc(cold, MALLOC_CAP_SPIRAM);
     s_con = heap_caps_calloc(1, sizeof *s_con, MALLOC_CAP_SPIRAM);
     if (s_con == NULL) s_con = heap_caps_calloc(1, sizeof *s_con, MALLOC_CAP_8BIT);
-    tllm_ctx_options opt = {TLLM_ACT_F32, kv_int8, clock_us, yield_hook};
+    s_work_ready = xSemaphoreCreateBinary();
+    s_work_done = xSemaphoreCreateBinary();
+    xTaskCreatePinnedToCore(gemv_worker, "tllm_gemv", 4096, NULL, 4, NULL, 0);
+    /* off until the board measures the crossover: "/parallel N" enables it for GEMVs >= N MACs */
+    tllm_ctx_options opt = {TLLM_ACT_F32, kv_int8, clock_us, yield_hook, dual_core, NULL, 0};
     if (hot_mem == NULL || cold_mem == NULL || s_con == NULL ||
         tllm_ctx_init(&s_ctx, &s_model, &opt, hot_mem, hot, cold_mem, cold) != TLLM_OK ||
         tllm_console_init(s_con, &s_ctx, write_out, NULL) != TLLM_OK) {

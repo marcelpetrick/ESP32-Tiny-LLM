@@ -14,7 +14,7 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 48
+    "Done" : 49
     "In progress" : 0
     "Next (no hardware needed)" : 1
     "Waiting for the ESP32-S3 board" : 6
@@ -48,6 +48,7 @@ flowchart LR
 | Experiments | E1–E4 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain |
 | Sweep | 14 variants (vision M8), label-collision-free chart, [Pareto chart](docs/results/sweep.md): RoPE and 2048 vocab are the best levers |
 | Product | web simulator (README screenshots at idle host timings), Docker image on GHCR, firmware with embedded model and board benchmarks |
+| Dual-core GEMV | row-split executor (core 0 worker), `/parallel N`, identical results in QEMU |
 | INT4 | Q4 group-wise format + C kernels (W4A32/W4A8), exact Python↔C parity; shipped v3 as 446 KiB Q4 with no quality loss |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
 | Repository page | `/githubAbout`: About text and 10 topics applied, each claim traced to a file |
@@ -82,7 +83,7 @@ gantt
 | measured PSRAM/SRAM/flash bandwidth | `/bandwidth`, replaces the 45 MB/s estimate |
 | measured tok/s, latency, memory | `tools/serial_runner.py` → `docs/results/benchmark-esp32s3.md` |
 | optimised kernels | ESP-DSP / ESP-NN / PIE INT8 GEMV where they measurably win |
-| dual-core policy | split rows only above the measured crossover |
+| dual-core policy | executor done (`/parallel N`); measure the crossover and set the default |
 | PSRAM 120 MHz trial | module permitting |
 | HIL CI | self-hosted runner with the board, 20 % regression threshold |
 
@@ -101,12 +102,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.9.0` |
-| Updated | 2026-09-29 12:19 UTC |
-| This commit | feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model |
+| Version | `0.9.1` |
+| Updated | 2026-09-29 12:29 UTC |
+| This commit | feat(firmware): split large GEMVs across both ESP32-S3 cores on demand |
 
 Recent commits:
 
+- `f98074f` feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model
 - `6446702` feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep
 - `200ceac` ci(docker): label the image GPL-3.0-or-later
 - `77728e8` docs: retake README screenshots at idle host timings
@@ -114,6 +116,5 @@ Recent commits:
 - `4400df9` docs(results): add the architecture sweep and the vision status page
 - `c6d8ed9` docs(plan): record the GitHub About text and topics
 - `5867c17` fix(tools): never stash plan.md in ship.sh
-- `f3abae9` docs: add plan.md status with charts and update it on every commit
 
 <!-- ship:end -->

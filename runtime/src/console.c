@@ -691,7 +691,7 @@ static void cmd_benchmark(tllm_console *con, const char *arg) {
 static void cmd_help(tllm_console *con) {
     out(con, "commands: /help /model-info /memory /profile on|off /kv-reset /reset /seed N /temp X /topk N\n"
              "          /max-tokens N /state /set key=value... /execute on|off /checksums /benchmark <case>\n"
-             "          /generate TEXT (continue a text, llama2.c style)  /tokenize TEXT\n");
+             "          /generate TEXT (continue a text, llama2.c style)  /tokenize TEXT  /parallel MIN_MACS\n");
     out(con, con->chat ? "anything else is a chat message.\n" : "anything else is a story prompt.\n");
     ok(con, "help");
 }
@@ -787,6 +787,16 @@ static void command(tllm_console *con, const char *line) {
         }
     } else if (strcmp(cmd, "/checksums") == 0) {
         cmd_checksums(con);
+    } else if (strcmp(cmd, "/parallel") == 0) {
+        long v = strtol(arg, &end, 10);
+        if (end == arg || *end != '\0' || v < 0) {
+            emit_error(con, "usage: /parallel MIN_MACS (0 = single core)");
+        } else if (con->ctx->opt.parallel == NULL && v > 0) {
+            emit_error(con, "no parallel executor on this platform");
+        } else {
+            con->ctx->opt.parallel_min_macs = (uint32_t)v;
+            ok(con, v ? "parallel gemv on" : "parallel gemv off");
+        }
     } else if (strcmp(cmd, "/tokenize") == 0) {
         cmd_tokenize(con, arg);
     } else if (strcmp(cmd, "/generate") == 0) {

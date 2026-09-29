@@ -74,6 +74,21 @@ static void matvec_q4(float *out, const tllm_tensor *w, const float *x) {
     }
 }
 
+tllm_tensor tllm_tensor_rows(const tllm_tensor *w, uint32_t begin, uint32_t end) {
+    tllm_tensor v = *w;
+    v.rows = end - begin;
+    if (w->dtype == TLLM_DTYPE_F32) {
+        v.data = (const float *)w->data + (size_t)begin * w->cols;
+    } else if (w->dtype == TLLM_DTYPE_I8) {
+        v.data = (const int8_t *)w->data + (size_t)begin * w->cols;
+        v.scales = w->scales + begin;
+    } else {
+        v.data = (const uint8_t *)w->data + (size_t)begin * (w->cols / 2u);
+        v.scales16 = w->scales16 + (size_t)begin * (w->cols / TLLM_Q4_GROUP);
+    }
+    return v;
+}
+
 void tllm_matvec(float *out, const tllm_tensor *w, const float *x) {
     const uint32_t rows = w->rows, cols = w->cols;
     if (w->dtype == TLLM_DTYPE_Q4) {
