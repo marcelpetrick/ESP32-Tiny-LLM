@@ -14,11 +14,11 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 51
-    "In progress" : 0
+    "Done" : 52
+    "In progress (paused)" : 1
     "Next (no hardware needed)" : 1
     "Waiting for the ESP32-S3 board" : 6
-    "Planned research" : 11
+    "Planned research" : 10
 ```
 
 ```mermaid
@@ -50,7 +50,8 @@ flowchart LR
 | Product | web simulator (README screenshots at idle host timings), Docker image on GHCR, firmware with embedded model and board benchmarks |
 | Dual-core GEMV | row-split executor (core 0 worker), `/parallel N`, identical results in QEMU |
 | INT4 | Q4 lossless at 0.8 M and 2.3 M params; bigger Q4 model not better (data-bound). Q4 group-wise format + C kernels (W4A32/W4A8), exact Python↔C parity; shipped v3 as 446 KiB Q4 with no quality loss |
-| Retrieval (§24 D) | fact table in Python + C (parity-tested), `<F>` injection; facts model copies unseen facts 99.5 % exact |
+| Retrieval (§24 D) | fact table in Python + C (parity-tested), `<F>` injection; facts model copies unseen facts 99.5 % exact; offered in the Docker web UI |
+| Q4 upper boundary (item 7) | tier L as Q4 = tier L INT8 at 57 % of the bytes, but not better than tier M: the task is data-bound |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
 | Repository page | `/githubAbout`: About text and 10 topics applied, each claim traced to a file |
 | Process | `plan.md` + AGENTS.md rule; `ship.sh` refreshes it on every commit (never stashes it) |
@@ -59,6 +60,7 @@ flowchart LR
 
 | Item | State |
 |---|---|
+| Chat-lite small talk (docs/03 §2) | **paused by the maintainer.** Done, uncommitted: `training/data/smalltalk.py` (20 persona topics, teacher filtering, 80/20 held-out phrasings, state-grounded replies), generator/dataset `--chat` + `smalltalk_test` suite, eval accepts any valid reply of a topic, unit tests green. Left: teacher bank `data/teacher/smalltalk.json` (generation was running), build dataset, train, evaluate, document, ship |
 
 ## Next (no hardware needed)
 
@@ -75,7 +77,8 @@ gantt
 
 | Item | Detail |
 |---|---|
-| Release checks | full pipeline, CI green, `docker pull` + run, clean tree |
+| Chat-lite finish | see *In progress* |
+| Release checks | final vision check (docs/09), full pipeline, CI green, `docker pull` + run (needs `gh auth refresh -s read:packages`), clean tree |
 
 ## Waiting for the ESP32-S3 board (phase P10)
 
@@ -90,12 +93,18 @@ gantt
 
 ## Planned research (after v1, vision §24–25)
 
-ternary (BitNet) student · LUT-based low-bit GEMV ·
-per-layer embeddings in flash · factorised embeddings / layer sharing ·
-joint tokenizer for a fair language-prior test · chat-lite corpus
-(persona, small talk) · sensor-token encoder · on-device
-adaptation · energy per token · Espressif operators as oracle · hybrid recurrent/local
-attention.
+| Item | Note |
+|---|---|
+| ternary (BitNet) student | Q4 is already lossless; lower bits mainly help speed |
+| LUT-based low-bit GEMV | pairs with ternary/Q4; measure on the board |
+| per-layer embeddings in flash | §24 A |
+| factorised embeddings / layer sharing | item 11 |
+| joint tokenizer | fair re-run of the language-prior experiment (E2) |
+| sensor-token encoder | §24 F |
+| on-device adaptation | §24 G, tiny trainable surfaces only |
+| energy per token | §24 H, needs board + power meter |
+| Espressif operators as oracle | item 19, with the board |
+| hybrid recurrent/local attention | item 18 |
 
 ## Current state
 
@@ -103,12 +112,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.10.2` |
-| Updated | 2026-09-29 16:50 UTC |
-| This commit | docs(results): measure the dense Q4 upper boundary with tier L |
+| Version | `0.10.3` |
+| Updated | 2026-09-29 17:10 UTC |
+| This commit | docs: refresh plan.md (done, paused chat-lite, what is left) |
 
 Recent commits:
 
+- `da09b55` docs(results): measure the dense Q4 upper boundary with tier L
 - `8aaf550` feat(docker): offer the facts model in the web simulator
 - `a9ad2a1` feat(model): ship a facts model that answers from retrieved device facts
 - `ec3588c` docs(results): report on-policy correction (E5); v3 stays the product
@@ -116,6 +126,5 @@ Recent commits:
 - `80fad25` feat(runtime): retrieve device facts and inject them for facts-enabled models
 - `5062eb7` feat(firmware): split large GEMVs across both ESP32-S3 cores on demand
 - `f98074f` feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model
-- `6446702` feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep
 
 <!-- ship:end -->
