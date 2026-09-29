@@ -37,6 +37,8 @@ is attached (phase P10 of the [plan](docs/06-implementation-plan.md)).
 | Transformer runtime (C99) | done — loader with CRC, tokenizers, KV cache, f32/W8A32/W8A8, RoPE, SwiGLU, GQA/MQA, sampler, profiler; zero heap use after init |
 | Numerical agreement | done — PyTorch ↔ C logits within 1e-4; identical greedy stories to upstream llama2.c `run.c` |
 | Greenhouse assistant model | done — 788 k params, 804 KiB INT8 (4×128, RoPE, 2048-token vocabulary), 88–100 % action accuracy per suite ([results](docs/results/greenhouse-m.md)) |
+| INT4 variant | done — same model as 446 KiB Q4 (`models/greenhouse-m-q4.tllm`), no measured quality loss |
+| Retrieval of device facts | done — keyword lookup in C injects a fact into the prompt; `models/greenhouse-m-facts-int8.tllm` answers facts it never saw in training 99.5 % exactly |
 | Distillation from a local LLM | done — Qwen3.5-4B (Apache-2.0) paraphrases, +17 points on unseen phrasing |
 | Firmware (ESP-IDF 5.5) | builds in CI, boots and chats in QEMU; flashing/HIL needs the board |
 | Web simulator + Docker image | done — `ghcr.io/marcelpetrick/esp32-tiny-llm` |

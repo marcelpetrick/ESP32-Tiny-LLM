@@ -55,6 +55,38 @@ expected). INT8 stays the default until the board shows whether nibble unpacking
 more CPU than it saves in PSRAM traffic (vision §11: "the actual win must be measured
 end-to-end in tokens/sec"). Flash the Q4 file into the model partition to try it.
 
+### Facts variant (retrieval, vision §24 D): `models/greenhouse-m-facts-int8.tllm`
+
+Same architecture as v3, trained from scratch for 8000 steps (1440 s) on the `--facts`
+dataset: the console looks up one fact by keyword in the user's line and injects it as
+`<F> fact</F>` ([architecture](../05-architecture.md) §7). CRC-32 `b3f3dbd6`. The
+`facts_heldout` suite asks only about four facts that never appear in training (frost,
+soil, pests, warranty), so the model has to copy text it has never seen.
+
+| Suite | action | fallback | reply exact | halluc. action |
+|---|---:|---:|---:|---:|
+| test_id | 99.8 % | 99.8 % | 99.6 % | 0.1 % |
+| teacher_test | 86.4 % | 93.9 % | 71.4 % | 6.3 % |
+| heldout | 88.8 % | 92.5 % | 72.9 % | 4.2 % |
+| robust | 99.4 % | 99.7 % | 98.7 % | 0.2 % |
+| multiturn | 99.7 % | 99.9 % | 99.6 % | 0.0 % |
+| safety | 99.9 % | 99.8 % | 99.8 % | 0.1 % |
+| **facts_heldout** | 100.0 % | 100.0 % | **99.5 %** | 0.0 % |
+
+(The first six suites are the facts dataset's own files with the same seeds as v3's, so
+they are close to, but not identical with, the v3 test files.)
+
+- **Answering from unseen facts works:** 99.5 % exact copies. The remaining errors are
+  small copy mistakes in the longest fact ("below 5 degrees" → "the below degrees").
+- **Synthetic facts must be free-form.** A first run used six sentence templates for the
+  synthetic facts: it copied templated facts perfectly but scored **0 %** on held-out facts,
+  answering from the device state instead. Free-form random word sequences (70 %) forced
+  real copying.
+- Knowledge now lives in a table (`runtime/src/facts.c`) that can be edited without
+  retraining; the parameters are the same 788 k.
+- Safety is 99.9 % instead of v3's 100 % (one extra hallucinated action in 2000), so v3
+  stays the default; the facts model is a research model to flash into the model partition.
+
 ## v2 (previous shipped model)
 
 | Property | Value |

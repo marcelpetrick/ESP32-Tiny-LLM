@@ -77,3 +77,15 @@ def test_tokenize_command_matches_python_tokenizer() -> None:
         payload = rt.command(f"/tokenize {text}")
     assert payload["ids"] == tokenizer.encode_text(text)
     assert payload["round_trip"] is True
+
+
+def test_facts_model_answers_from_retrieved_facts() -> None:
+    """The committed facts model answers held-out facts copied from the C fact table."""
+    model = runtime.REPO_ROOT / "models" / "greenhouse-m-facts-int8.tllm"
+    with runtime.Runtime(model) as rt:
+        reply = rt.command("is there a warranty?")
+        assert reply["fact"] == "warranty"  # held out: never seen in training
+        assert reply["text"] == "the controller has a two year warranty."
+        reply = rt.command("turn on the fan")
+        assert reply["fact"] is None
+        assert reply["action"] == "fan=1"

@@ -74,19 +74,57 @@ FACT_FRAMES = (
     "what about {k}", "tell me about {k}", "what does {k} mean", "{k}?", "explain {k}",
     "i have a question about {k}", "what should i know about {k}",
 )  # fmt: skip
-_SYN_THINGS = (
-    "the side door",
-    "the rain sensor",
-    "the seed tray",
-    "the fuse",
-    "the main valve",
-    "the backup battery",
-    "the co2 sensor",
-    "the shade net",
-    "the drip line",
-    "the compost bin",
-    "the air filter",
-    "the roof panel",
+_SYN_ADJ = (
+    "side",
+    "rain",
+    "seed",
+    "main",
+    "backup",
+    "co2",
+    "shade",
+    "drip",
+    "compost",
+    "air",
+    "roof",
+    "north",
+    "south",
+    "spare",
+    "inner",
+    "outer",
+    "old",
+    "new",
+    "small",
+    "big",
+    "top",
+    "lower",
+    "left",
+    "right",
+)
+_SYN_NOUN = (
+    "door",
+    "sensor",
+    "tray",
+    "valve",
+    "battery",
+    "net",
+    "line",
+    "bin",
+    "filter",
+    "panel",
+    "fuse",
+    "hose",
+    "switch",
+    "lamp",
+    "pipe",
+    "shelf",
+    "cable",
+    "gate",
+    "pot",
+    "meter",
+    "clamp",
+    "tube",
+    "rack",
+    "box",
 )
 _SYN_TEMPLATES = (
     "{t} is checked every {n} days.",
@@ -96,13 +134,41 @@ _SYN_TEMPLATES = (
     "{t} needs cleaning every {n} weeks.",
     "{t} holds {n} litres.",
 )
+# a general word pool for free-form facts: the model must copy arbitrary injected text, not
+# fill a handful of templates (a first facts model only learned the templates)
+_WORD_BLOCK = (
+    """a about above after air all always and at away before below between by can check clean
+    close cold day days degrees dry each every fan few fine first for from good hand hands has
+    have heat heater high hot hours if in inside is it keep leaves less light long loose low
+    many more most move must near never night not now of off often on once one open or other
+    outside part plants pump put remove replace run safe short slow small soft soil some spray
+    start stay still stop sun take than the them then this three time to top turn two under
+    until use wait warm water week weeks wet when with year years young zero drainage insects
+    controller window warranty guarantee potting frost season leaf root seeds bottle tap fresh
+    quiet loud fast strong weak light dark green brown yellow red clear full empty level"""
+)  # fmt: skip
+_SYN_WORDS = tuple(_WORD_BLOCK.split())
 
 
 def synthetic_fact(rng: random.Random) -> tuple[str, str]:
-    """A random fact about a made-up component; teaches copying instead of memorising."""
-    thing = rng.choice(_SYN_THINGS)
-    text = rng.choice(_SYN_TEMPLATES).format(t=thing, n=rng.randint(2, 40))
-    return text, thing.removeprefix("the ")
+    """A random fact about a made-up component; teaches copying instead of memorising.
+
+    30 % follow a template, 70 % are free-form word sequences (sometimes with a number),
+    so the only way to answer is to copy the injected text.
+    """
+    thing = f"{rng.choice(_SYN_ADJ)} {rng.choice(_SYN_NOUN)}"
+    if rng.random() < 0.3:
+        return rng.choice(_SYN_TEMPLATES).format(t=f"the {thing}", n=rng.randint(2, 40)), thing
+    words = [rng.choice(_SYN_WORDS) for _ in range(rng.randint(4, 14))]
+    if rng.random() < 0.4:
+        words.insert(rng.randint(0, len(words)), str(rng.randint(0, 99)))
+    if rng.random() < 0.3:
+        words.insert(0, f"the {thing}")
+    text = " ".join(words)
+    if rng.random() < 0.3:
+        cut = rng.randint(2, len(words) - 1)
+        text = " ".join(words[:cut]) + ", " + " ".join(words[cut:])
+    return text + ".", thing
 
 
 class GenerationError(RuntimeError):

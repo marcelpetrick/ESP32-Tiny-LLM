@@ -14,8 +14,8 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 50
-    "In progress" : 1
+    "Done" : 51
+    "In progress" : 0
     "Next (no hardware needed)" : 1
     "Waiting for the ESP32-S3 board" : 6
     "Planned research" : 11
@@ -50,6 +50,7 @@ flowchart LR
 | Product | web simulator (README screenshots at idle host timings), Docker image on GHCR, firmware with embedded model and board benchmarks |
 | Dual-core GEMV | row-split executor (core 0 worker), `/parallel N`, identical results in QEMU |
 | INT4 | Q4 group-wise format + C kernels (W4A32/W4A8), exact Python↔C parity; shipped v3 as 446 KiB Q4 with no quality loss |
+| Retrieval (§24 D) | fact table in Python + C (parity-tested), `<F>` injection; facts model copies unseen facts 99.5 % exact |
 | Review | `/reviewBranch` findings 1–4 fixed (history hygiene, cache key, arena ownership, render guard) |
 | Repository page | `/githubAbout`: About text and 10 topics applied, each claim traced to a file |
 | Process | `plan.md` + AGENTS.md rule; `ship.sh` refreshes it on every commit (never stashes it) |
@@ -58,7 +59,6 @@ flowchart LR
 
 | Item | State |
 |---|---|
-| Retrieval of device facts (§24 D) | fact table + retrieval in Python and C (parity-tested), `<F>` injection in the console, dataset `--facts` with a `facts_heldout` suite; next: train and evaluate a facts model |
 
 ## Next (no hardware needed)
 
@@ -103,12 +103,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.9.4` |
-| Updated | 2026-09-29 15:47 UTC |
-| This commit | docs(results): report on-policy correction (E5); v3 stays the product |
+| Version | `0.10.0` |
+| Updated | 2026-09-29 16:20 UTC |
+| This commit | feat(model): ship a facts model that answers from retrieved device facts |
 
 Recent commits:
 
+- `ec3588c` docs(results): report on-policy correction (E5); v3 stays the product
 - `cbdff81` feat(training): mine the student's mistakes for on-policy correction (E5)
 - `80fad25` feat(runtime): retrieve device facts and inject them for facts-enabled models
 - `5062eb7` feat(firmware): split large GEMVs across both ESP32-S3 cores on demand
@@ -116,6 +117,5 @@ Recent commits:
 - `6446702` feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep
 - `200ceac` ci(docker): label the image GPL-3.0-or-later
 - `77728e8` docs: retake README screenshots at idle host timings
-- `bdf2dcb` fix(tools): place sweep chart labels without overlaps
 
 <!-- ship:end -->
