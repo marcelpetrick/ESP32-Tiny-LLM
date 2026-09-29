@@ -37,7 +37,7 @@ COPY training/__init__.py /app/training/__init__.py
 COPY training/world /app/training/world
 COPY tools/__init__.py tools/runtime.py /app/tools/
 COPY web /app/web
-COPY models/greenhouse-m-int8.tllm /app/models/greenhouse-m-int8.tllm
+COPY models/greenhouse-m-int8.tllm models/greenhouse-m-facts-int8.tllm /app/models/
 ENV TINYLLM_LIB=/app/lib/libtinyllm.so \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -46,4 +46,6 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
     CMD ["python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"]
 CMD ["python", "-m", "web.server", "--host", "0.0.0.0", "--port", "8080", \
-     "--model", "greenhouse=/app/models/greenhouse-m-int8.tllm", "--model", "stories=/app/models/stories260K.tllm"]
+     "--model", "greenhouse=/app/models/greenhouse-m-int8.tllm", \
+     "--model", "greenhouse-facts=/app/models/greenhouse-m-facts-int8.tllm", \
+     "--model", "stories=/app/models/stories260K.tllm"]

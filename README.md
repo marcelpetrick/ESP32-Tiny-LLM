@@ -49,7 +49,7 @@ is attached (phase P10 of the [plan](docs/06-implementation-plan.md)).
 
 ```bash
 docker run --rm -p 8080:8080 ghcr.io/marcelpetrick/esp32-tiny-llm:latest
-# open http://localhost:8080 — "greenhouse (chat)" and "stories (story)" models
+# open http://localhost:8080 — "greenhouse", "greenhouse-facts" (chat) and "stories (story)" models
 ```
 
 **From source** (Linux; needs [uv](https://docs.astral.sh/uv/), CMake, a C compiler):

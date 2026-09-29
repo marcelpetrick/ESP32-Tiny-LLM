@@ -103,12 +103,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.10.0` |
-| Updated | 2026-09-29 16:20 UTC |
-| This commit | feat(model): ship a facts model that answers from retrieved device facts |
+| Version | `0.10.1` |
+| Updated | 2026-09-29 16:23 UTC |
+| This commit | feat(docker): offer the facts model in the web simulator |
 
 Recent commits:
 
+- `a9ad2a1` feat(model): ship a facts model that answers from retrieved device facts
 - `ec3588c` docs(results): report on-policy correction (E5); v3 stays the product
 - `cbdff81` feat(training): mine the student's mistakes for on-policy correction (E5)
 - `80fad25` feat(runtime): retrieve device facts and inject them for facts-enabled models
@@ -116,6 +117,5 @@ Recent commits:
 - `f98074f` feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model
 - `6446702` feat(model): ship v3 (RoPE, 2048-token vocabulary) chosen by the sweep
 - `200ceac` ci(docker): label the image GPL-3.0-or-later
-- `77728e8` docs: retake README screenshots at idle host timings
 
 <!-- ship:end -->

@@ -33,4 +33,6 @@ story="$(curl -fsS -X POST "${url}/api/chat" -H 'Content-Type: application/json'
 grep -q '"text": "Once upon a time' <<<"${story}" || die "story failed: ${story}"
 docker exec "${name}" tinyllm-cli /app/models/greenhouse-m-int8.tllm -c /model-info | grep -q 'int8 weights' ||
     die "cli failed"
+docker exec "${name}" tinyllm-cli /app/models/greenhouse-m-facts-int8.tllm -c "is there a warranty?" |
+    grep -q '"fact":"warranty"' || die "facts model did not retrieve the fact"
 log "docker image ${tag} OK (${url})"
