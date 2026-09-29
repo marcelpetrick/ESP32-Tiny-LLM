@@ -14,8 +14,8 @@ work item changes state.
 ```mermaid
 pie showData
     title Work items by state
-    "Done" : 49
-    "In progress" : 2
+    "Done" : 50
+    "In progress" : 1
     "Next (no hardware needed)" : 1
     "Waiting for the ESP32-S3 board" : 6
     "Planned research" : 11
@@ -45,7 +45,7 @@ flowchart LR
 | Runtime | C99, f32/W8A32/W8A8, int8 KV, RoPE, SwiGLU, GQA/MQA, zero heap after init, 99 % C coverage |
 | Verification | Python ↔ C logits within 1e-4; identical output to upstream llama2.c `run.c`; chip tokenizes like Python (QEMU) |
 | Model | v3: 788 k params, 804 KiB INT8 (RoPE, 2048 vocab, picked by the sweep); 99 % in-distribution, 88–89 % unseen phrasing, 99.7 % multi-turn, 100 % safety |
-| Experiments | E1–E4 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain |
+| Experiments | E1–E5 (vision M6): teacher phrasing is the decisive lever; tier L gives no gain; on-policy correction (E5) fixes fallbacks but costs safety, so v3 stays |
 | Sweep | 14 variants (vision M8), label-collision-free chart, [Pareto chart](docs/results/sweep.md): RoPE and 2048 vocab are the best levers |
 | Product | web simulator (README screenshots at idle host timings), Docker image on GHCR, firmware with embedded model and board benchmarks |
 | Dual-core GEMV | row-split executor (core 0 worker), `/parallel N`, identical results in QEMU |
@@ -59,7 +59,6 @@ flowchart LR
 | Item | State |
 |---|---|
 | Retrieval of device facts (§24 D) | fact table + retrieval in Python and C (parity-tested), `<F>` injection in the console, dataset `--facts` with a `facts_heldout` suite; next: train and evaluate a facts model |
-| On-policy correction (E5) | seen phrasing gave only 47/20 000 errors; mining on a fresh teacher round (unseen phrasing) running |
 
 ## Next (no hardware needed)
 
@@ -104,12 +103,13 @@ attention.
 
 | Field | Value |
 |---|---|
-| Version | `0.9.3` |
-| Updated | 2026-09-29 12:56 UTC |
-| This commit | feat(training): mine the student's mistakes for on-policy correction (E5) |
+| Version | `0.9.4` |
+| Updated | 2026-09-29 15:47 UTC |
+| This commit | docs(results): report on-policy correction (E5); v3 stays the product |
 
 Recent commits:
 
+- `cbdff81` feat(training): mine the student's mistakes for on-policy correction (E5)
 - `80fad25` feat(runtime): retrieve device facts and inject them for facts-enabled models
 - `5062eb7` feat(firmware): split large GEMVs across both ESP32-S3 cores on demand
 - `f98074f` feat(runtime): add group-wise INT4 (Q4) weights and ship a Q4 model
@@ -117,6 +117,5 @@ Recent commits:
 - `200ceac` ci(docker): label the image GPL-3.0-or-later
 - `77728e8` docs: retake README screenshots at idle host timings
 - `bdf2dcb` fix(tools): place sweep chart labels without overlaps
-- `4400df9` docs(results): add the architecture sweep and the vision status page
 
 <!-- ship:end -->

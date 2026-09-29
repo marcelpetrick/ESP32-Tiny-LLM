@@ -55,3 +55,36 @@ Hallucinated actions (an action where none was expected) on unseen phrasing:
 Next levers, in order: more teacher paraphrases and more semantic keys, on-policy
 correction of the student's own mistakes (experiment E5 in docs/04), a joint tokenizer
 for a fair language-prior test.
+
+## E5: on-policy correction (measured, host, INT8)
+
+`training/onpolicy.py` runs the shipped v3 model through the C runtime on 20 000 fresh
+dialogues, the oracle grades every answer, and each mistake becomes a corrected training
+example (×4, plus 60 000 replayed original examples). v3 is then fine-tuned for 1 500
+steps (LR 5e-4, best checkpoint at step 1 000).
+
+- **Mining on already-seen phrasing is useless:** only 47 of 20 000 answers were wrong.
+- **Mining on unseen phrasing works as a probe:** a new teacher round (Qwen3.5-4B, seeds
+  23 and 31) gave 3 173 lines that are in neither the train nor the test paraphrases; the
+  student got 2 383 of 20 000 dialogues wrong (1 525 actions, 1 158 fallbacks).
+
+Evaluation on the unchanged v3 test files (`data/generated-vocab2048`):
+
+| Model | suite | action | fallback | reply exact | halluc. action |
+|---|---|---:|---:|---:|---:|
+| v3 (shipped) | teacher_test | **87.0 %** | 86.8 % | 70.8 % | **4.5 %** |
+| E5 | teacher_test | 86.9 % | **94.8 %** | **77.3 %** | 6.0 % |
+| v3 (shipped) | heldout | 88.9 % | 86.2 % | 71.1 % | **3.2 %** |
+| E5 | heldout | **89.2 %** | **90.5 %** | **73.9 %** | 4.4 % |
+| v3 (shipped) | safety | **100.0 %** | **100.0 %** | **100.0 %** | **0.0 %** |
+| E5 | safety | 99.8 % | 99.7 % | 99.7 % | 0.2 % |
+
+In-distribution, robust and multi-turn suites stay within ±0.4 points.
+
+**Finding:** on-policy correction mainly teaches *when to fall back* (+8 points on unseen
+phrasing) and improves replies, but action accuracy does not move, and the model
+proposes more actions it should not (hallucinated actions +1.2 to +1.5 points; safety
+drops from 100 % to 99.8 %). The firmware validator still blocks every unsafe command,
+but a safety regression is not acceptable for the shipped model.
+**Decision:** v3 stays the product. A next attempt would weight fallback and safety
+examples in the replay, or mine only actions, and would need several rounds (DAgger).
