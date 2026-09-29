@@ -60,7 +60,27 @@ flowchart LR
 
 | Item | State |
 |---|---|
-| Chat-lite small talk (docs/03 §2) | **paused by the maintainer.** Done, uncommitted: `training/data/smalltalk.py` (20 persona topics, teacher filtering, 80/20 held-out phrasings, state-grounded replies), generator/dataset `--chat` + `smalltalk_test` suite, eval accepts any valid reply of a topic, unit tests green. Left: teacher bank `data/teacher/smalltalk.json` (generation was running), build dataset, train, evaluate, document, ship |
+| Chat-lite small talk (docs/03 §2) | **paused by the maintainer (2026-09-29), resume next session.** Done and committed (v0.10.4): `training/data/smalltalk.py`, `--chat` dataset option, `smalltalk_test` suite, eval accepting any valid topic reply, tests. Teacher bank generated locally (`data/teacher/smalltalk.json`, 20 topics, ~800 user lines, ~390 replies; not committed yet). Chat dataset built locally (`data/generated-chat`). Training `runs/m-chat` was stopped at step ~1000 of 8000 |
+
+## Resume here (handover, 2026-09-29)
+
+Current step: chat-lite, training was stopped on request. Next steps in order:
+
+1. Review `data/teacher/smalltalk.json` (teacher quality is mixed: some user lines sit in the
+   wrong topic, some replies are odd); drop bad lines, then commit it (`feat(data)`).
+2. Rebuild the dataset if the bank changed:
+   `uv run python -m training.data.dataset --out data/generated-chat --vocab 2048 --teacher data/teacher/paraphrases.json --chat data/teacher/smalltalk.json`
+3. Train from scratch on the GPU (~25 min):
+   `.venv-gpu/bin/python -m training.train --data data/generated-chat --out runs/m-chat --preset M --pos rope --steps 8000`
+   (tier L with `--preset L` as a second run if tier M is weak on small talk).
+4. Export INT8 and evaluate all suites incl. `smalltalk_test`:
+   `uv run python -m training.export --checkpoint runs/m-chat/best.pt --out runs/eval/m-chat.tllm --dtype i8`,
+   `uv run python -m training.eval --model runs/eval/m-chat.tllm --data data/generated-chat --splits test_id teacher_test heldout robust multiturn safety smalltalk_test`.
+   Compare with v3 (safety must stay 100 % for a default model).
+5. Document in `docs/results/greenhouse-m.md` + `docs/03-chat-model.md`, update
+   `docs/09-vision-status.md`, move chat-lite to *Done* here; ship the model file as a
+   research model (and in the Docker web UI) if it is good.
+6. Release checks (below).
 
 ## Next (no hardware needed)
 
@@ -112,12 +132,13 @@ gantt
 
 | Field | Value |
 |---|---|
-| Version | `0.10.5` |
-| Updated | 2026-09-29 21:32 UTC |
-| This commit | docs(results): state the tier-L size ratio exactly (3.4x) |
+| Version | `0.10.6` |
+| Updated | 2026-09-29 21:37 UTC |
+| This commit | docs: record the chat-lite handover and next steps in plan.md |
 
 Recent commits:
 
+- `864be2a` docs(results): state the tier-L size ratio exactly (3.4x)
 - `8ddd139` feat(training): generate chat-lite small talk with the local teacher
 - `33c999e` docs: refresh plan.md (done, paused chat-lite, what is left)
 - `da09b55` docs(results): measure the dense Q4 upper boundary with tier L
@@ -125,6 +146,5 @@ Recent commits:
 - `a9ad2a1` feat(model): ship a facts model that answers from retrieved device facts
 - `ec3588c` docs(results): report on-policy correction (E5); v3 stays the product
 - `cbdff81` feat(training): mine the student's mistakes for on-policy correction (E5)
-- `80fad25` feat(runtime): retrieve device facts and inject them for facts-enabled models
 
 <!-- ship:end -->
