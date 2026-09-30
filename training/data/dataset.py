@@ -150,7 +150,11 @@ def generate(
     )
     typo_rng = random.Random(spec.seed * 7919)
     out: list[Sample] = []
+    tries = 0
     while len(out) < spec.size:
+        tries += 1
+        if tries > 1000 * spec.size:
+            raise ValueError(f"split {spec.name}: the filter keeps (almost) no samples")
         sample = gen.sample(force_reference=spec.force_reference)
         if spec.keep is not None and not spec.keep(sample):
             continue

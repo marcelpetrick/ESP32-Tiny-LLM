@@ -132,12 +132,13 @@ gantt
 
 | Field | Value |
 |---|---|
-| Version | `0.10.6` |
-| Updated | 2026-09-29 21:37 UTC |
-| This commit | docs: record the chat-lite handover and next steps in plan.md |
+| Version | `0.10.7` |
+| Updated | 2026-09-30 07:08 UTC |
+| This commit | feat(data): curate and commit the chat-lite small-talk bank |
 
 Recent commits:
 
+- `3849d88` docs: record the chat-lite handover and next steps in plan.md
 - `864be2a` docs(results): state the tier-L size ratio exactly (3.4x)
 - `8ddd139` feat(training): generate chat-lite small talk with the local teacher
 - `33c999e` docs: refresh plan.md (done, paused chat-lite, what is left)
@@ -145,6 +146,5 @@ Recent commits:
 - `8aaf550` feat(docker): offer the facts model in the web simulator
 - `a9ad2a1` feat(model): ship a facts model that answers from retrieved device facts
 - `ec3588c` docs(results): report on-policy correction (E5); v3 stays the product
-- `cbdff81` feat(training): mine the student's mistakes for on-policy correction (E5)
 
 <!-- ship:end -->

@@ -96,6 +96,30 @@ _COMMAND_WORDS = (
     "lower",
 )
 _DEVICE = {w for words in DEVICE_WORDS.values() for w in words}
+# user lines that belong to other intents (diagnosis, greetings, help) or ask for things the
+# persona cannot do; replies that claim things it cannot know (weather, the outside world)
+_USER_BLOCK = {
+    "problem",
+    "problems",
+    "alert",
+    "alerts",
+    "picture",
+    "map",
+    "sing",
+    "song",
+    "coordinates",
+    "hello",
+    "hi",
+    "who",
+    "weather",
+    "grow",
+    "help",
+    "spring",
+    "bloom",
+    "boss",
+    "rain",
+}
+_REPLY_BLOCK = {"rain", "raining", "weather", "phone", "sun", "outside", "yesterday", "hug"}
 _TAKEN = {f.lstrip("!") for key in ("greet", "help", "thanks", "ood") for f in FRAMES[key]}
 
 
@@ -109,7 +133,7 @@ def accept_user(text: str) -> bool:
     return (
         bool(_WORDS.match(text))
         and 1 <= len(words) <= 14
-        and not ({*words} & (_DEVICE | set(_COMMAND_WORDS)))
+        and not ({*words} & (_DEVICE | set(_COMMAND_WORDS) | _USER_BLOCK))
         and retrieve(text) is None
         and text.strip(" ?!.") not in _TAKEN
     )
@@ -118,7 +142,11 @@ def accept_user(text: str) -> bool:
 def accept_reply(text: str) -> bool:
     """A usable persona reply: simple words, 3-22 of them, never promising a device action."""
     words = _words(text)
-    return bool(_WORDS.match(text)) and 3 <= len(words) <= 22 and not {*words} & set(_COMMAND_WORDS)
+    return (
+        bool(_WORDS.match(text))
+        and 3 <= len(words) <= 22
+        and not {*words} & (set(_COMMAND_WORDS) | _REPLY_BLOCK)
+    )
 
 
 def _prompt(kind: str, topic: Topic, count: int) -> str:
@@ -139,6 +167,7 @@ def generate(
 ) -> dict[str, Any]:
     """Ask the teacher for every topic; filter, deduplicate and split user lines 80/20."""
     bank: dict[str, dict[str, list[str]]] = {}
+    per_topic: dict[str, tuple[set[str], set[str]]] = {}
     for topic in TOPICS:
         users: set[str] = set()
         replies: set[str] = set()
@@ -153,7 +182,14 @@ def generate(
                     line = teacher.clean(raw)
                     if line and (accept_user(line) if kind == "user" else accept_reply(line)):
                         pool.add(line)
-        ordered = sorted(users)
+        per_topic[topic.name] = (users, replies)
+    counts: dict[str, int] = {}
+    for users, _ in per_topic.values():
+        for line in users:
+            counts[line] = counts.get(line, 0) + 1
+    for topic in TOPICS:
+        users, replies = per_topic[topic.name]
+        ordered = sorted(u for u in users if counts[u] == 1)  # ambiguous lines are dropped
         random.Random(topic.name).shuffle(ordered)
         cut = max(1, len(ordered) // 5)
         bank[topic.name] = {

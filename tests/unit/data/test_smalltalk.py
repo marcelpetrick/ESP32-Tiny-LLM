@@ -22,6 +22,8 @@ from training.world import DeviceState
         ("hello", False),  # an existing intent frame
         ("is there a warranty", False),  # a fact keyword
         ("what is 2 plus 2", False),  # digits
+        ("do you see any problems", False),  # a diagnosis question
+        ("hello, who are you", False),  # greeting / help intent
         ("a b c d e f g h i j k l m n o", False),  # too long
     ],
 )
@@ -34,6 +36,7 @@ def test_accept_reply() -> None:
     assert not smalltalk.accept_reply("ok.")  # too short
     assert not smalltalk.accept_reply("i will turn on the light for you.")  # promises an action
     assert not smalltalk.accept_reply("i am 3 years old.")  # numbers only from the state
+    assert not smalltalk.accept_reply("it is raining outside so the soil is nice.")  # unknowable
 
 
 def test_render_reply_uses_state_numbers() -> None:
@@ -47,10 +50,9 @@ def test_render_reply_uses_state_numbers() -> None:
 
 def _fake_ask(prompt: str, seed: int) -> str:
     if prompt.startswith("write 30"):
-        return "\n".join(
-            [f"- how are you number {w}" for w in ("one", "two", "three")]
-            + ["turn on the fan", "1. are you ok"]
-        )
+        tag = " ".join(prompt.split(" computer to ")[1].split()[:7]).strip(",.")  # topic-specific
+        lines = [f"- {tag} number {w}" for w in ("one", "two", "three")]
+        return "\n".join([*lines, "turn on the fan", "1. are you ok"])
     return "i am fine and happy.\nok\n2. i like the plants a lot."
 
 
@@ -60,8 +62,9 @@ def test_generate_bank_and_load(tmp_path: Path) -> None:
     assert set(topics) == {t.name for t in smalltalk.TOPICS}
     how = topics["how_are_you"]
     assert "turn on the fan" not in how["train"] + how["test"]
+    assert "are you ok" not in how["train"] + how["test"]  # every topic claims it: ambiguous
     assert len(how["test"]) == 1
-    assert len(how["train"]) == 3
+    assert len(how["train"]) == 2
     assert how["replies"] == ["i am fine and happy.", "i like the plants a lot."]
     assert "{t}" in " ".join(topics["how_is_it"]["replies"])  # grounded: code templates
     assert bank["manifest"]["teacher"] == "fake"
