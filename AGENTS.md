@@ -133,6 +133,7 @@ Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
 |---|---|
 | `vision.md` | original project vision (read-only reference; changes need the maintainer) |
 | `plan.md` | living status: done / in progress / next / waiting for hardware / research, updated every commit |
+| `next_steps.md` | handover when work is paused: what is ongoing and the exact next steps |
 | `docs/` | feasibility study, research angles, architecture, implementation plan |
 | `training/` | Python: tokenizer, datasets, PyTorch model, training, export, quantization, eval |
 | `runtime/` | portable C99 inference runtime (`tinyllm`) + host CLI + C unit tests |
